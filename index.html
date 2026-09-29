@@ -550,6 +550,38 @@ async function loadBoard(){
   }catch(e){empty.textContent="Couldn't reach the leaderboard. Try Refresh in a moment."}
 }
 
+// ---------- confetti (only at the moment of a real solve) ----------
+function confetti(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const cv=document.createElement("canvas"),dpr=Math.min(2,window.devicePixelRatio||1);
+  cv.style.cssText="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50";
+  document.body.appendChild(cv);
+  const ctx=cv.getContext("2d");
+  const size=()=>{cv.width=innerWidth*dpr;cv.height=innerHeight*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)};
+  size();addEventListener("resize",size);
+  const cs=getComputedStyle(document.documentElement);
+  const colors=["--good","--warn","--near","--accent","--bush","--brak","--plate"].map(v=>cs.getPropertyValue(v).trim()).filter(Boolean);
+  const W=innerWidth,H=innerHeight,P=[];
+  // two cannons from the bottom corners plus a sprinkle from the top
+  for(let i=0;i<170;i++){
+    const side=i%3,left=side===0;
+    const x=side===2?Math.random()*W:(left?-10:W+10), y=side===2?-20:H*0.75;
+    const ang=side===2?Math.PI/2:(left?-Math.PI/3:-2*Math.PI/3)+(Math.random()-.5)*0.7;
+    const sp=side===2?Math.random()*2+1:Math.random()*9+9;
+    P.push({x,y,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,w:Math.random()*7+5,h:Math.random()*4+3,r:Math.random()*6.3,vr:(Math.random()-.5)*0.4,c:colors[i%colors.length],t:Math.random()*6.3});
+  }
+  const t0=performance.now();
+  (function frame(now){
+    const age=now-t0;ctx.clearRect(0,0,W,H);
+    ctx.globalAlpha=age>2600?Math.max(0,1-(age-2600)/900):1;
+    for(const p of P){
+      p.vy+=0.28;p.vx*=0.985;p.vy*=0.985;p.x+=p.vx+Math.sin(p.t+=0.08)*0.6;p.y+=p.vy;p.r+=p.vr;
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.scale(1,Math.cos(p.t));ctx.fillStyle=p.c;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();
+    }
+    if(age<3500)requestAnimationFrame(frame);else{removeEventListener("resize",size);cv.remove()}
+  })(t0);
+}
+
 // ---------- actions ----------
 async function finish(won,gaveUp){
   st.done=true;st.gaveUp=gaveUp;st.end=Date.now();st.sw=software;
@@ -557,6 +589,7 @@ async function finish(won,gaveUp){
   st.dq=won&&(st.end-st.start)<MIN_SECS*1000;
   st.won=won&&!st.dq;
   save();render();
+  if(st.won)confetti();
   if(st.ranked){
     try{
       const secs=await rpc("finish_attempt",{p_puzzle:cur,p_player:player,p_tries:Math.max(1,st.guesses.length),p_solved:won,p_gave_up:gaveUp,p_software:software});
