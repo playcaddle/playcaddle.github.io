@@ -96,6 +96,7 @@ button:disabled{opacity:.4;cursor:default}
 .confirm{display:grid;gap:8px;padding:10px;border-radius:7px;background:color-mix(in srgb,var(--bad) 10%,var(--sheet));border:1px solid color-mix(in srgb,var(--bad) 40%,var(--rule))}
 .confirm p{margin:0;font-size:.88rem}
 .result h2{margin:0;font-family:var(--f-display);font-size:1.6rem;line-height:1.1}
+.result h2.dq{color:var(--bad)}
 pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;background:var(--bg);border:1px dashed var(--rule);border-radius:6px;padding:10px 12px;white-space:pre-wrap;word-break:break-word}
 .next{font-family:var(--f-mono);font-size:.85rem;color:var(--muted)}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
@@ -247,6 +248,7 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
 (function(){
 const EPOCH = new Date(2026,8,1); // Sept 1 2026 = puzzle #1
 const MAX = 5, TOL = 0.01, SITE = "playcaddle.github.io";
+const MIN_SECS = 20; // must match the 20-second rule in leaderboard.sql
 const CFG = window.CADDLE_CONFIG || {};
 const ONLINE = !!(CFG.supabaseUrl && CFG.supabaseKey);
 const MATERIALS = [
@@ -427,7 +429,7 @@ function render(){
   $("reveal").textContent=isToday()?"Start timer and reveal":"Reveal for practice";
   // mode pill
   const mp=$("modePill");
-  if(st.done){mp.hidden=false;mp.textContent=st.won?"✓ Solved · admire mode":st.gaveUp?"Gave up · admire mode":"Out of tries · admire mode"}
+  if(st.done){mp.hidden=false;mp.textContent=st.dq?"🚫 Disqualified · admire mode":st.won?"✓ Solved · admire mode":st.gaveUp?"Gave up · admire mode":"Out of tries · admire mode"}
   else if(started&&!st.ranked){mp.hidden=false;mp.textContent="Practice · not ranked"}
   else if(started){mp.hidden=false;mp.textContent="Ranked run"}
   else mp.hidden=true;
@@ -457,9 +459,11 @@ function render(){
   $("result").hidden=!st.done;
   if(st.done){
     const time=mmss(elapsed());
-    $("resTitle").textContent=st.won?`Solved in ${time}`:st.gaveUp?"You gave up":"Out of tries";
+    $("resTitle").textContent=st.dq?"🚫 Disqualified":st.won?`Solved in ${time}`:st.gaveUp?"You gave up":"Out of tries";
+    $("resTitle").classList.toggle("dq",!!st.dq);
     let body=`True mass: ${part.mass.toFixed(2)} g (pass band ${(part.mass*(1-TOL)).toFixed(2)}–${(part.mass*(1+TOL)).toFixed(2)} g).`;
-    if(st.won&&st.ranked&&st.rank)body+=` You placed ${ordinal(st.rank)} of ${st.total}.`;
+    if(st.dq)body=`That solve took ${Math.floor(elapsed()/1000)} seconds, which is faster than anyone can model this part. Solves under ${MIN_SECS} seconds don't count. Please play honestly! ${body}`;
+    else if(st.won&&st.ranked&&st.rank)body+=` You placed ${ordinal(st.rank)} of ${st.total}.`;
     else if(st.won&&!st.ranked)body+=" This run was practice, so it isn't on the leaderboard.";
     $("resBody").textContent=body;
     $("shareText").textContent=shareText();
@@ -481,12 +485,13 @@ function shareText(){
   const squares=st.guesses.map(g=>SQ[band(Math.abs(g-part.mass)/part.mass)]).join("")+"⬜".repeat(MAX-st.guesses.length);
   const sec=Math.floor(elapsed()/1000),time=keycaps(mmss(elapsed()));
   const lines=[`Caddle #${cur} ${KIND[part.kind].emoji}`];
-  if(st.won)lines.push(`⏱️ ${time} ${speedTier(sec)}`);
+  if(st.dq)lines.push(`🚫 ${time} disqualified`);
+  else if(st.won)lines.push(`⏱️ ${time} ${speedTier(sec)}`);
   else if(st.gaveUp)lines.push(`🏳️ ${time}`);
   else lines.push(`❌ ${time}`);
   lines.push(`${squares} ${st.won?st.guesses.length:"X"}/${MAX}`);
   if(st.won&&st.ranked&&st.rank)lines.push(`${st.rank===1?"🥇":st.rank===2?"🥈":st.rank===3?"🥉":"🏁"} ${ordinal(st.rank)} of ${st.total}`);
-  else if(!st.ranked)lines.push("🧪 practice");
+  else if(!st.ranked&&!st.dq)lines.push("🧪 practice");
   lines.push(`🛠️ ${st.sw||software}`);
   lines.push(SITE);
   return lines.join("\n");
@@ -529,11 +534,15 @@ async function loadBoard(){
 
 // ---------- actions ----------
 async function finish(won,gaveUp){
-  st.done=true;st.won=won;st.gaveUp=gaveUp;st.end=Date.now();st.sw=software;save();render();
+  st.done=true;st.gaveUp=gaveUp;st.end=Date.now();st.sw=software;
+  // A solve faster than MIN_SECS is impossible by hand, so it's disqualified
+  st.dq=won&&(st.end-st.start)<MIN_SECS*1000;
+  st.won=won&&!st.dq;
+  save();render();
   if(st.ranked){
     try{
       const secs=await rpc("finish_attempt",{p_puzzle:cur,p_player:player,p_tries:Math.max(1,st.guesses.length),p_solved:won,p_gave_up:gaveUp,p_software:software});
-      if(typeof secs==="number"){st.official=secs;save()}
+      if(typeof secs==="number"){st.official=secs;if(won&&secs<MIN_SECS){st.dq=true;st.won=false}save()}
     }catch(e){}
     render();await loadBoard();
   }
