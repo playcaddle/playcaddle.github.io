@@ -3,6 +3,6 @@
 // Both are safe to be public: the database only allows the three
 // functions in leaderboard.sql, never direct table access.
 window.CADDLE_CONFIG = {
-  supabaseUrl: "",   // e.g. "https://abcdefghijklmnop.supabase.co"
-  supabaseKey: ""    // the "publishable" or "anon public" key
+  supabaseUrl: "https://mrtrjvjgtwyusbjudqja.supabase.co",
+  supabaseKey: "sb_publishable_YfizLrmlOB0JnN4ZXS6GKA_l-ZKV_kj"
 };
