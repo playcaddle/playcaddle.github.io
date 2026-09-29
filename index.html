@@ -151,6 +151,9 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
 .curve{margin:0;display:grid;gap:4px}
 .curve svg{width:100%;height:auto;display:block}
 .curve figcaption{font-size:.78rem;color:var(--muted)}
+.skills{display:grid;gap:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.chips span{font-size:.78rem;padding:3px 10px;border-radius:999px;background:color-mix(in srgb,var(--hue) 14%,var(--sheet));border:1px solid color-mix(in srgb,var(--hue) 40%,var(--rule))}
 .cv-area{fill:color-mix(in srgb,var(--hue) 16%,transparent)}
 .cv-beat{fill:color-mix(in srgb,var(--hue) 45%,transparent)}
 .cv-line{fill:none;stroke:var(--hue);stroke-width:2.2;stroke-linejoin:round}
@@ -279,6 +282,7 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
     <div class="rankline" id="mRank" hidden></div>
     <p class="sub pct" id="mPct" hidden></p>
     <figure class="curve" id="mCurve" hidden><svg id="curveSvg" viewBox="0 0 360 132" role="img" aria-label="Distribution of solve times"></svg><figcaption id="curveCap"></figcaption></figure>
+    <div class="skills"><div class="eyebrow">Skills covered</div><div class="chips" id="mSkills"></div></div>
     <pre class="share" id="shareText"></pre>
     <button class="primary wide" id="copy">Copy result</button>
     <div class="stats">
@@ -464,7 +468,7 @@ let software=store.get("caddle-sw","Onshape");
 {const n=store.get("caddle-name","");const ok=n&&!nameProblem(n)?n:"";$("pname").value=ok;if(ok!==n)store.set("caddle-name",ok)}
 
 function load(n){
-  cur=n;part=makePart(n);curveTimes=null;
+  cur=n;part=makePart(n);curveTimes=null;curveCounts=null;
   st=store.get("caddle-"+n,{start:null,end:null,guesses:[],done:false,won:false,gaveUp:false,ranked:false,official:null,rank:null,total:null,sw:null});
   document.documentElement.style.setProperty("--hue",KIND[part.kind].hue);
   $("dwg").innerHTML=draw(part,n);
@@ -571,47 +575,71 @@ function fillModal(){
   else if(st.ranked&&pl&&!st.won){pc.hidden=false;pc.textContent=`📊 ${pl} ${pl===1?"person has":"people have"} played today, and ${st.solvedCount||0} solved it.`}
   else pc.hidden=true;
   drawCurve();
+  $("mSkills").innerHTML="";skillsFor(part).forEach(k=>{const c=document.createElement("span");c.textContent=k;$("mSkills").appendChild(c)});
   document.querySelector(".tomorrow b").textContent=isToday()?"Come back tomorrow!":"Today's part is waiting!";
 }
-let curveTimes=null;
+let curveTimes=null,curveCounts=null;
+// Where you place among everyone who attempted: solve times as a smoothed curve,
+// plus a "didn't solve" block at the slow end for people who gave up or ran out of tries.
 function drawCurve(){
   const fig=$("mCurve"),svg=$("curveSvg"),cap=$("curveCap");
   const times=(curveTimes||[]).filter(t=>t>0);
   const you=st.won&&!st.dq?Math.floor(elapsed()/1000):null;
-  const all=you!=null&&!st.ranked?[...times,you]:times; // a practice run is placed among the ranked times
-  if(all.length<3){
-    if(you!=null&&ONLINE){fig.hidden=false;svg.innerHTML="";cap.textContent="The bell curve of everyone's times appears once 3 people have solved this part."}
+  const practice=!st.ranked;
+  const all=you!=null&&practice?[...times,you]:times;          // a practice run is placed among the ranked times
+  const dnf=Math.max(0,((curveCounts&&curveCounts.played)||0)-((curveCounts&&curveCounts.solved)||0))+(practice&&!st.won?1:0);
+  const attempted=all.length+dnf;
+  if(attempted<3){
+    if(ONLINE){fig.hidden=false;svg.innerHTML="";cap.textContent="The placement curve appears once 3 people have attempted this part."}
     else fig.hidden=true;
     return;
   }
   fig.hidden=false;
-  const n=all.length,mean=all.reduce((a,b)=>a+b,0)/n,sd=Math.sqrt(all.reduce((a,b)=>a+(b-mean)**2,0)/n)||30;
-  const h=Math.max(15,1.06*sd*Math.pow(n,-0.2)); // smoothing width (Silverman's rule)
-  const lo=Math.max(0,Math.min(...all)-2.5*h),hi=Math.max(...all)+2.5*h;
-  const W=360,H=132,L=10,R=350,T=12,B=104;
-  const X=t=>L+(t-lo)/(hi-lo)*(R-L);
-  const dens=t=>all.reduce((a,v)=>a+Math.exp(-0.5*((t-v)/h)**2),0);
-  const pts=[];for(let i=0;i<=120;i++){const t=lo+(hi-lo)*i/120;pts.push([t,dens(t)])}
-  const top=Math.max(...pts.map(p=>p[1]));
-  const Y=d=>B-(d/top)*(B-T);
-  const path=pts.map((p,i)=>(i?"L":"M")+X(p[0]).toFixed(1)+","+Y(p[1]).toFixed(1)).join("");
-  let out=`<path class="cv-area" d="${path}L${R},${B}L${L},${B}Z"/>`;
-  if(you!=null){ // shade everyone you beat (slower than you)
-    const slow=pts.filter(p=>p[0]>=you);
-    if(slow.length)out+=`<path class="cv-beat" d="M${X(you).toFixed(1)},${B}`+slow.map(p=>"L"+X(p[0]).toFixed(1)+","+Y(p[1]).toFixed(1)).join("")+`L${R},${B}Z"/>`;
+  const W=360,H=132,T=14,B=104,L=10,R=dnf?300:350;
+  let out="";
+  if(all.length>=2){
+    const n=all.length,mean=all.reduce((a,b)=>a+b,0)/n,sd=Math.sqrt(all.reduce((a,b)=>a+(b-mean)**2,0)/n)||30;
+    const h=Math.max(15,1.06*sd*Math.pow(n,-0.2));
+    const lo=Math.max(0,Math.min(...all)-2.5*h),hi=Math.max(...all)+2.5*h;
+    const X=t=>L+(t-lo)/(hi-lo)*(R-L);
+    const dens=t=>all.reduce((a,v)=>a+Math.exp(-0.5*((t-v)/h)**2),0);
+    const pts=[];for(let i=0;i<=120;i++){const t=lo+(hi-lo)*i/120;pts.push([t,dens(t)])}
+    const top=Math.max(...pts.map(p=>p[1]));
+    const Y=d=>B-(d/top)*(B-T);
+    const path=pts.map((p,i)=>(i?"L":"M")+X(p[0]).toFixed(1)+","+Y(p[1]).toFixed(1)).join("");
+    out+=`<path class="cv-area" d="${path}L${R},${B}L${L},${B}Z"/>`;
+    if(you!=null){const slow=pts.filter(p=>p[0]>=you);if(slow.length)out+=`<path class="cv-beat" d="M${X(you).toFixed(1)},${B}`+slow.map(p=>"L"+X(p[0]).toFixed(1)+","+Y(p[1]).toFixed(1)).join("")+`L${R},${B}Z"/>`}
+    out+=`<path class="cv-line" d="${path}"/>`;
+    all.forEach(t=>{out+=`<circle class="cv-dot" cx="${X(t).toFixed(1)}" cy="${B+5}" r="2"/>`});
+    const span=(hi-lo)/60,step=[1,2,5,10,15,30,60].find(s=>span/s<=5)||120;
+    for(let m=Math.ceil(lo/60/step)*step;m*60<=hi;m+=step){const x=X(m*60);out+=`<line class="cv-axis" x1="${x}" y1="${B}" x2="${x}" y2="${B+3}"/><text class="cv-tick" x="${x}" y="${B+22}" text-anchor="middle">${m}m</text>`}
+    if(you!=null){
+      const x=X(you),yy=Y(dens(you)),anchor=x<50?"start":x>R-40?"end":"middle";
+      out+=`<line class="cv-you" x1="${x}" y1="${B}" x2="${x}" y2="${Math.max(T-2,yy-16)}"/><circle class="cv-youdot" cx="${x}" cy="${yy}" r="5"/><text class="cv-lbl" x="${x}" y="${Math.max(10,yy-20)}" text-anchor="${anchor}">You · ${mmss(you*1000)}</text>`;
+    }
+  }else{
+    out+=`<text class="cv-tick" x="${(L+R)/2}" y="${(T+B)/2}" text-anchor="middle">${all.length} solve${all.length===1?"":"s"} so far</text>`;
   }
-  out+=`<path class="cv-line" d="${path}"/><line class="cv-axis" x1="${L}" y1="${B}" x2="${R}" y2="${B}"/>`;
-  all.forEach(t=>{out+=`<circle class="cv-dot" cx="${X(t).toFixed(1)}" cy="${B+5}" r="2"/>`});
-  // minute ticks, spaced so labels don't collide
-  const span=(hi-lo)/60,step=[1,2,5,10,15,30,60].find(s=>span/s<=6)||120;
-  for(let m=Math.ceil(lo/60/step)*step;m*60<=hi;m+=step){const x=X(m*60);out+=`<line class="cv-axis" x1="${x}" y1="${B}" x2="${x}" y2="${B+3}"/><text class="cv-tick" x="${x}" y="${B+22}" text-anchor="middle">${m}m</text>`}
-  if(you!=null){
-    const x=X(you),yy=Y(dens(you)),anchor=x<50?"start":x>310?"end":"middle";
-    out+=`<line class="cv-you" x1="${x}" y1="${B}" x2="${x}" y2="${Math.max(T-2,yy-16)}"/><circle class="cv-youdot" cx="${x}" cy="${yy}" r="5"/><text class="cv-lbl" x="${x}" y="${Math.max(9,yy-20)}" text-anchor="${anchor}">You · ${mmss(you*1000)}</text>`;
+  out+=`<line class="cv-axis" x1="${L}" y1="${B}" x2="${dnf?350:R}" y2="${B}"/>`;
+  if(dnf){
+    const bh=Math.max(10,Math.min(B-T,(dnf/attempted)*(B-T)*2.2));
+    out+=`<rect class="${you!=null?"cv-beat":"cv-area"}" x="312" y="${B-bh}" width="38" height="${bh}" rx="3"/><text class="cv-lbl" x="331" y="${B-bh-5}" text-anchor="middle">${dnf}</text><text class="cv-tick" x="331" y="${B+14}" text-anchor="middle">didn't</text><text class="cv-tick" x="331" y="${B+25}" text-anchor="middle">solve</text>`;
+    if(you==null&&!st.won)out+=`<text class="cv-lbl" x="331" y="${B-bh-17}" text-anchor="middle">You</text>`;
   }
   svg.innerHTML=out;
-  const med=[...all].sort((a,b)=>a-b)[Math.floor(n/2)];
-  cap.textContent=`Solve times for ${n} ${n===1?"player":"players"} · median ${mmss(med*1000)}`+(you!=null?" · shaded = players you beat":"");
+  let line=`${attempted} attempted · ${all.length} solved`;
+  if(all.length){const med=[...all].sort((a,b)=>a-b)[Math.floor(all.length/2)];line+=` · median ${mmss(med*1000)}`}
+  if(you!=null&&attempted>1){const beaten=all.filter(t=>t>you).length+dnf;line+=` · you beat ${Math.round(beaten/(attempted-1)*100)}% (shaded)`}
+  cap.textContent=line;
+}
+function skillsFor(p){
+  const s={
+    plate:["Rectangle sketch","Extrude","Through holes","Rectangular pattern","Symmetric placement"],
+    bushing:["Revolve","Stepped profile","Concentric bore","Diameter dimensions"],
+    bracket:["L-profile sketch","Extrude","Hole placement","Chained dimensions"]
+  }[p.kind].slice();
+  if(p.kind==="plate"&&p.D)s.splice(3,0,"Center bore");
+  return s.concat(["Custom material","Mass properties"]);
 }
 function beatPct(){const pl=st.played||0;return pl<=1?100:Math.round((pl-st.rank)/(pl-1)*100)}
 let lastFocus=null;
@@ -650,7 +678,7 @@ async function loadBoard(){
   try{
     const [rows,cnt,times]=await Promise.all([rpc("get_board",{p_puzzle:n,p_player:player}),rpc("get_counts",{p_puzzle:n}).catch(()=>null),rpc("get_times",{p_puzzle:n}).catch(()=>null)]);
     if(n!==cur)return;
-    curveTimes=Array.isArray(times)?times:null;
+    curveTimes=Array.isArray(times)?times:null;curveCounts=cnt&&cnt[0]?cnt[0]:null;
     if(st.done)fillModal();
     const c=cnt&&cnt[0];
     if(c&&st.done&&st.ranked&&(st.played!==c.played||st.solvedCount!==c.solved)){st.played=c.played;st.solvedCount=c.solved;save();render()}
