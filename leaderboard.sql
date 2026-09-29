@@ -179,3 +179,14 @@ left join (
 ) a using (day)
 order by d.day desc;
 revoke all on public.daily_stats from anon, authenticated;
+
+-- Every solve time for a puzzle (seconds), for the bell curve. No names or IDs.
+create or replace function public.get_times(p_puzzle int)
+returns int[]
+language sql stable security definer set search_path = public as $$
+  select coalesce(array_agg(extract(epoch from finished_at - started_at)::int
+                            order by finished_at - started_at), '{}')
+  from attempts where puzzle = p_puzzle and solved;
+$$;
+revoke execute on function public.get_times(int) from public;
+grant  execute on function public.get_times(int) to anon, authenticated;
