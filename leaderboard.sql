@@ -20,6 +20,35 @@ create table if not exists public.attempts (
 alter table public.attempts enable row level security;   -- no policies = no direct access
 revoke all on table public.attempts from anon, authenticated;
 
+-- Leaderboard names: letters and numbers only (1-20), no slurs or inappropriate words.
+-- The word lists are base64-encoded so they aren't sitting in plain text.
+create or replace function public.name_ok(n text)
+returns boolean
+language plpgsql immutable set search_path = public as $$
+declare
+  l  text := lower(coalesce(n, ''));
+  m  text := translate(l, '01345789', 'oieastbg');        -- leetspeak: 0=o 1=i 3=e 4=a 5=s 7=t 8=b 9=g
+  c  text := regexp_replace(m, '(.)\1+', '\1', 'g');     -- fuuuck -> fuck
+  c2 text := regexp_replace(l, '(.)\1+', '\1', 'g');
+  s  text := regexp_replace(l, '[0-9]+$', '');             -- name123 -> name
+  w  text;
+begin
+  if coalesce(n, '') !~ '^[A-Za-z0-9]{1,20}$' then return false; end if;
+  foreach w in array string_to_array(convert_from(decode('ZnVjayxzaGl0LGJpdGNoLGN1bnQsbmlnZyxuaWdhLGZhZ2dvdCxmYWdnLHJldGFyZCxkaWNraGVhZCxwdXNzeSx3aG9yZSxzbHV0LHJhcGlzdCxwZW5pcyx2YWdpbmEscG9ybixuYXppLGhpdGxlcixraWtlLGNoaW5rLHdldGJhY2ssdHJhbm55LGdvb2ssYmVhbmVyLGtrayxhc3Nob2xlLGJhc3RhcmQsaml6eix0aXR0aWVzLGJvb2IsZGlsZG8saG9ybnksbWlsZixtb2xlc3QscGVkb3BoaWxlLHR3YXQsd2Fuayxib2xsb2NrLGhlaWwsY29ja3N1Y2tlcixtb3RoZXJmLGJsb3dqb2IsaGFuZGpvYixoZW50YWksbnVkZSxvcmdhc20sc2VtZW4sc3Blcm0seHh4LGtpbGx5b3Vyc2VsZixreXM=', 'base64'), 'UTF8'), ',') loop
+    if position(w in l) > 0 or position(w in m) > 0 or position(w in c) > 0 or position(w in c2) > 0 then return false; end if;
+  end loop;
+  foreach w in array string_to_array(convert_from(decode('YXNzLGFzc2VzLGRpY2ssY29jayxmYWcscmFwZSxzZXgsc2V4eSxzcGljLGR5a2UsY29vbixjdW0sdGl0LHRpdHMsYW5hbCxwZWRvLGhvZSxob2VzLG5lZ3JvLHBha2ksbmlnLGphcCxob21vLGxlc2Jv', 'base64'), 'UTF8'), ',') loop
+    if w in (l, m, c, c2, s) then return false; end if;
+  end loop;
+  return true;
+end $$;
+
+create or replace function public.clean_name(p text)
+returns text
+language sql immutable set search_path = public as $$
+  select case when public.name_ok(btrim(coalesce(p, ''))) then btrim(p) else 'Anonymous' end;
+$$;
+
 -- Puzzle #1 is 2026-09-01. Only today's puzzle (±1 day for time zones) can be started.
 create or replace function public.start_attempt(p_puzzle int, p_player uuid, p_name text, p_software text)
 returns timestamptz
@@ -34,7 +63,7 @@ begin
   insert into attempts (puzzle, player, name, software)
   values (
     p_puzzle, p_player,
-    left(coalesce(nullif(btrim(p_name), ''), 'Anonymous'), 20),
+    public.clean_name(p_name),
     case when p_software in ('Onshape','Fusion','SOLIDWORKS') then p_software else 'Other' end
   )
   on conflict (puzzle, player) do nothing;          -- a refresh can't restart the clock
@@ -85,3 +114,18 @@ revoke execute on function public.get_board(int, uuid) from public;
 grant  execute on function public.start_attempt(int, uuid, text, text) to anon, authenticated;
 grant  execute on function public.finish_attempt(int, uuid, int, boolean, boolean, text) to anon, authenticated;
 grant  execute on function public.get_board(int, uuid) to anon, authenticated;
+
+-- Change your name on every leaderboard you're on.
+create or replace function public.set_name(p_player uuid, p_name text)
+returns text
+language plpgsql security definer set search_path = public as $$
+declare n text := btrim(coalesce(p_name, ''));
+begin
+  if not public.name_ok(n) then
+    raise exception 'That name isn''t allowed';
+  end if;
+  update attempts set name = n where player = p_player;
+  return n;
+end $$;
+revoke execute on function public.set_name(uuid, text) from public;
+grant  execute on function public.set_name(uuid, text) to anon, authenticated;

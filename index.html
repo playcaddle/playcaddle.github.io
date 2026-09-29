@@ -74,7 +74,9 @@ button:disabled{opacity:.4;cursor:default}
 .clock{font-family:var(--f-display);font-weight:800;font-size:3.4rem;line-height:1;font-variant-numeric:tabular-nums;color:var(--hue)}
 .status{font-size:.82rem;color:var(--muted);text-align:right}
 .field{display:grid;gap:4px}
-.field input{font:inherit;padding:8px 10px;border:1px solid var(--rule);border-radius:7px;background:var(--bg);color:var(--ink);width:100%}
+.field input{font:inherit;padding:8px 10px;border:1px solid var(--rule);border-radius:7px;background:var(--bg);color:var(--ink);width:100%;min-width:0}
+.namerow{display:flex;gap:8px}
+.namerow button{flex:none}
 .seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
 .seg button{padding:7px 4px;font-size:.82rem}
 .seg button[aria-pressed="true"]{background:var(--soft);border-color:var(--accent);font-weight:600}
@@ -186,7 +188,11 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
         </div>
         <div class="field">
           <label class="eyebrow" for="pname">Leaderboard name</label>
-          <input id="pname" maxlength="20" autocomplete="nickname" placeholder="Anonymous">
+          <form class="namerow" id="nameForm" novalidate>
+            <input id="pname" maxlength="20" autocomplete="nickname" placeholder="Anonymous">
+            <button id="nameSave" type="submit">Save</button>
+          </form>
+          <div class="msg" id="nameMsg"></div>
         </div>
         <div class="eyebrow">Modeling in</div>
         <div class="seg" id="sw">
@@ -399,10 +405,22 @@ const keycaps=str=>[...str].map(c=>/\d/.test(c)?KEYCAP[+c]:c).join("");
 function speedTier(sec){return sec<300?"🚀":sec<600?"⚡":sec<1200?"🔧":sec<2400?"🐢":"🦥"}
 const ordinal=n=>n+(["th","st","nd","rd"][(n%100-20)%10]||["th","st","nd","rd"][n%100]||"th");
 
+// ---------- name rules (mirror name_ok in leaderboard.sql) ----------
+const BAN_SUB=atob("ZnVjayxzaGl0LGJpdGNoLGN1bnQsbmlnZyxuaWdhLGZhZ2dvdCxmYWdnLHJldGFyZCxkaWNraGVhZCxwdXNzeSx3aG9yZSxzbHV0LHJhcGlzdCxwZW5pcyx2YWdpbmEscG9ybixuYXppLGhpdGxlcixraWtlLGNoaW5rLHdldGJhY2ssdHJhbm55LGdvb2ssYmVhbmVyLGtrayxhc3Nob2xlLGJhc3RhcmQsaml6eix0aXR0aWVzLGJvb2IsZGlsZG8saG9ybnksbWlsZixtb2xlc3QscGVkb3BoaWxlLHR3YXQsd2Fuayxib2xsb2NrLGhlaWwsY29ja3N1Y2tlcixtb3RoZXJmLGJsb3dqb2IsaGFuZGpvYixoZW50YWksbnVkZSxvcmdhc20sc2VtZW4sc3Blcm0seHh4LGtpbGx5b3Vyc2VsZixreXM=").split(",");
+const BAN_EXACT=atob("YXNzLGFzc2VzLGRpY2ssY29jayxmYWcscmFwZSxzZXgsc2V4eSxzcGljLGR5a2UsY29vbixjdW0sdGl0LHRpdHMsYW5hbCxwZWRvLGhvZSxob2VzLG5lZ3JvLHBha2ksbmlnLGphcCxob21vLGxlc2Jv").split(",");
+function nameProblem(n){
+  if(!n)return null; // blank means Anonymous
+  if(!/^[A-Za-z0-9]{1,20}$/.test(n))return"Names can only use letters and numbers, up to 20.";
+  const l=n.toLowerCase(),m=l.replace(/[01345789]/g,c=>({0:"o",1:"i",3:"e",4:"a",5:"s",7:"t",8:"b",9:"g"})[c]);
+  const c=m.replace(/(.)\1+/g,"$1"),c2=l.replace(/(.)\1+/g,"$1"),s=l.replace(/[0-9]+$/,"");
+  if(BAN_SUB.some(w=>[l,m,c,c2].some(x=>x.includes(w)))||BAN_EXACT.some(w=>[l,m,c,c2,s].includes(w)))return"That name isn't allowed. Please pick another one.";
+  return null;
+}
+
 // ---------- state ----------
 let cur=todayNum(),part,st,timerId,nextId;
 let software=store.get("caddle-sw","Onshape");
-$("pname").value=store.get("caddle-name","");
+{const n=store.get("caddle-name","");const ok=n&&!nameProblem(n)?n:"";$("pname").value=ok;if(ok!==n)store.set("caddle-name",ok)}
 
 function load(n){
   cur=n;part=makePart(n);
@@ -436,7 +454,7 @@ function render(){
   // inputs
   $("guess").disabled=!live;$("submit").disabled=!live;
   $("giveup").hidden=!live;
-  $("pname").disabled=started;
+  $("nameSave").disabled=$("pname").value.trim().slice(0,20)===store.get("caddle-name","");
   if(!started)$("msg").textContent="Reveal the drawing to start.";
   else if(st.done)$("msg").textContent="This part is finished. Come back tomorrow for a new one.";
   else if(!st.guesses.length)$("msg").textContent="Enter the mass from your CAD program.";
@@ -548,7 +566,9 @@ async function finish(won,gaveUp){
   }
 }
 $("reveal").onclick=async()=>{
-  const name=$("pname").value.trim().slice(0,20);store.set("caddle-name",name);
+  let name=$("pname").value.trim().slice(0,20);
+  if(nameProblem(name)){name="";$("pname").value="";$("nameMsg").textContent="That name wasn't allowed, so you're playing as Anonymous."}
+  store.set("caddle-name",name);
   st.start=Date.now();st.sw=software;st.ranked=false;save();render();$("guess").focus();
   if(ONLINE&&isToday()){
     $("rankStatus").textContent="connecting…";
@@ -574,7 +594,25 @@ $("giveup").onclick=()=>{$("confirm").hidden=false;$("giveup").hidden=true};
 $("giveNo").onclick=()=>{$("confirm").hidden=true;$("giveup").hidden=false};
 $("giveYes").onclick=()=>{$("confirm").hidden=true;finish(false,true)};
 document.querySelectorAll("#sw button").forEach(b=>b.onclick=()=>{software=b.dataset.sw;store.set("caddle-sw",software);if(st.start&&!st.done){st.sw=software;save()}render()});
-$("pname").addEventListener("change",()=>store.set("caddle-name",$("pname").value.trim().slice(0,20)));
+$("pname").addEventListener("input",()=>{
+  const el=$("pname"),clean=el.value.replace(/[^A-Za-z0-9]/g,"").slice(0,20);
+  if(clean!==el.value){el.value=clean;$("nameMsg").textContent="Letters and numbers only."}else $("nameMsg").textContent="";
+  $("nameSave").disabled=clean===store.get("caddle-name","");
+});
+$("nameForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const name=$("pname").value.trim().slice(0,20);
+  const bad=nameProblem(name);
+  if(bad){$("nameMsg").textContent=bad;return}
+  store.set("caddle-name",name);$("pname").value=name;$("nameSave").disabled=true;
+  if(!ONLINE){$("nameMsg").textContent="Name saved.";return}
+  $("nameMsg").textContent="Saving…";
+  try{
+    const saved=await rpc("set_name",{p_player:player,p_name:name||"Anonymous"});
+    $("nameMsg").textContent=`Saved. You now appear as "${saved}" on every leaderboard.`;
+    loadBoard();
+  }catch(err){$("nameMsg").textContent=/allowed/.test(String(err))?"That name isn't allowed. Please pick another one.":"Saved on this device, but the leaderboard didn't update. Try again in a moment.";$("nameSave").disabled=false}
+});
 $("prev").onclick=()=>cur>1&&load(cur-1);
 $("next").onclick=()=>cur<todayNum()&&load(cur+1);
 $("refreshBoard").onclick=loadBoard;
