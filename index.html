@@ -138,6 +138,21 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
 .tbl{fill:var(--muted);font-family:var(--f-mono);font-size:8.5px;letter-spacing:.06em}
 .tbb{fill:#fff;font-family:var(--f-display);font-weight:700;font-size:17px}
 .tbn{fill:#fff;font-family:var(--f-mono);font-size:10px}
+.overlay{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:16px;background:color-mix(in srgb,var(--ink) 45%,transparent);animation:fade .2s ease}
+.modal{position:relative;width:min(420px,100%);max-height:calc(100% - 16px);overflow:auto;background:var(--sheet);border-radius:14px;border-top:8px solid var(--hue);padding:22px 20px 18px;display:grid;gap:12px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35);animation:pop .28s cubic-bezier(.2,1.4,.4,1)}
+.modal .close{position:absolute;top:8px;right:8px;width:36px;height:36px;padding:0;border:none;background:transparent;color:var(--muted);font-size:1.7rem;line-height:1;border-radius:50%}
+.modal .close:hover{background:var(--soft);color:var(--ink)}
+.modal .big{font-size:3rem;line-height:1}
+.modal h2{margin:0;font-family:var(--f-display);font-weight:800;font-size:2rem;line-height:1.05;text-wrap:balance}
+.modal .sub{margin:0;color:var(--muted);text-wrap:balance}
+.modal .rankline{justify-self:center;font-weight:600;padding:5px 14px;border-radius:999px;background:color-mix(in srgb,var(--gold) 22%,var(--sheet))}
+.modal pre.share{text-align:left;justify-self:center;min-width:220px}
+.modal .pct{color:var(--ink);font-weight:500}
+.modal .wide{width:100%;padding:11px}
+.modal .tomorrow{display:grid;gap:2px;padding-top:10px;border-top:1px solid var(--rule)}
+.modal .tomorrow b{font-family:var(--f-display);font-size:1.25rem}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 <script src="config.js"></script>
@@ -225,14 +240,7 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
       <div class="card result" id="result" hidden>
         <h2 id="resTitle"></h2>
         <div class="msg" id="resBody"></div>
-        <pre class="share" id="shareText"></pre>
-        <button class="primary" id="copy">Copy result</button>
-        <div class="next" id="nextIn"></div>
-        <div class="stats">
-          <div><b id="stPlayed">0</b><span>played</span></div>
-          <div><b id="stWon">0</b><span>solved</span></div>
-          <div><b id="stBest">–</b><span>best time</span></div>
-        </div>
+        <button class="primary" id="openRes">Show results and share</button>
       </div>
 
       <div class="card">
@@ -247,6 +255,25 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
         <p>Check that the mass is shown in grams, not kilograms or pounds.</p>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mHead">
+    <button class="close" id="closeRes" aria-label="Close">×</button>
+    <div class="big" id="mEmoji">🎉</div>
+    <h2 id="mHead">Nice job!</h2>
+    <p class="sub" id="mSub"></p>
+    <div class="rankline" id="mRank" hidden></div>
+    <p class="sub pct" id="mPct" hidden></p>
+    <pre class="share" id="shareText"></pre>
+    <button class="primary wide" id="copy">Copy result</button>
+    <div class="stats">
+      <div><b id="stPlayed">0</b><span>played</span></div>
+      <div><b id="stWon">0</b><span>solved</span></div>
+      <div><b id="stBest">–</b><span>best time</span></div>
+    </div>
+    <div class="tomorrow"><b>Come back tomorrow!</b><span class="next" id="nextIn"></span></div>
   </div>
 </div>
 
@@ -430,7 +457,7 @@ function load(n){
   $("kindPill").textContent=`${KIND[part.kind].emoji} ${part.name}`;
   $("dayLbl").textContent=`#${n} · ${fmtDate(dateOf(n))}`;
   $("prev").disabled=n<=1;$("next").disabled=n>=todayNum();
-  $("confirm").hidden=true;
+  $("confirm").hidden=true;$("overlay").hidden=true;
   render();loadBoard();
 }
 function save(){store.set("caddle-"+cur,st)}
@@ -485,6 +512,7 @@ function render(){
     else if(st.won&&!st.ranked)body+=" This run was practice, so it isn't on the leaderboard.";
     $("resBody").textContent=body;
     $("shareText").textContent=shareText();
+    fillModal();
     const all=stats();$("stPlayed").textContent=all.played;$("stWon").textContent=all.won;$("stBest").textContent=all.best?mmss(all.best):"–";
     startNextCountdown();
   }else{clearInterval(nextId)}
@@ -499,6 +527,42 @@ function startNextCountdown(){
   f();nextId=setInterval(f,1000);
 }
 
+// ---------- results popup ----------
+function fillModal(){
+  const time=mmss(elapsed()),sec=Math.floor(elapsed()/1000),tries=st.guesses.length,ans=`${part.mass.toFixed(2)} g`;
+  let e,h,sub;
+  if(st.dq){e="🚫";h="Disqualified";sub="That was faster than anyone can model this part, so it doesn't count. Please play honestly!"}
+  else if(st.won){
+    [e,h,sub]=[
+      ["🎯","Hole in one!","First try. That model was dead on."],
+      ["🎉","Nice job!","Solved in two tries. Sharp modeling."],
+      ["💪","Solid work!","Three tries and you nailed it."],
+      ["😅","Nice save!","It took four tries, but you got there."],
+      ["😮‍💨","Phew! That was a close one!","You got it on your very last try."]
+    ][Math.min(tries,5)-1];
+    sub+=` Your time: ${time}.`+(sec<300?" Speedy! 🚀":"");
+  }else if(st.gaveUp){e="🏳️";h="Tough one today";sub=`The answer was ${ans}. Take another look at the drawing and see where your model went off.`}
+  else{
+    const best=Math.min(...st.guesses.map(g=>Math.abs(g-part.mass)/part.mass));
+    if(best<=0.05){e="😬";h="So close!";sub=`Your best guess was only ${(best*100).toFixed(1)}% off. The answer was ${ans}.`}
+    else{e="❌";h="Not this time";sub=`The answer was ${ans}. Double-check the density and units next time.`}
+  }
+  $("mEmoji").textContent=e;$("mHead").textContent=h;$("mSub").textContent=sub;
+  const r=$("mRank");
+  if(st.won&&st.ranked&&st.rank){r.hidden=false;r.textContent=`${st.rank===1?"🥇":st.rank===2?"🥈":st.rank===3?"🥉":"🏁"} ${ordinal(st.rank)} of ${st.total} today`}
+  else if(st.won&&!st.ranked){r.hidden=false;r.textContent="🧪 Practice run, not ranked"}
+  else r.hidden=true;
+  const pc=$("mPct"),pl=st.played||0;
+  if(st.won&&st.ranked&&st.rank&&pl){pc.hidden=false;pc.textContent=pl<=1?"🌟 You're the first to finish today!":`📊 Faster than ${beatPct()}% of the ${pl} people who played today.`}
+  else if(st.ranked&&pl&&!st.won){pc.hidden=false;pc.textContent=`📊 ${pl} ${pl===1?"person has":"people have"} played today, and ${st.solvedCount||0} solved it.`}
+  else pc.hidden=true;
+  document.querySelector(".tomorrow b").textContent=isToday()?"Come back tomorrow!":"Today's part is waiting!";
+}
+function beatPct(){const pl=st.played||0;return pl<=1?100:Math.round((pl-st.rank)/(pl-1)*100)}
+let lastFocus=null;
+function openModal(){lastFocus=document.activeElement;$("overlay").hidden=false;$("closeRes").focus()}
+function closeModal(){$("overlay").hidden=true;if(lastFocus&&lastFocus.focus)lastFocus.focus()}
+
 function shareText(){
   const squares=st.guesses.map(g=>SQ[band(Math.abs(g-part.mass)/part.mass)]).join("")+"⬜".repeat(MAX-st.guesses.length);
   const sec=Math.floor(elapsed()/1000),time=keycaps(mmss(elapsed()));
@@ -508,7 +572,7 @@ function shareText(){
   else if(st.gaveUp)lines.push(`🏳️ ${time}`);
   else lines.push(`❌ ${time}`);
   lines.push(`${squares} ${st.won?st.guesses.length:"X"}/${MAX}`);
-  if(st.won&&st.ranked&&st.rank)lines.push(`${st.rank===1?"🥇":st.rank===2?"🥈":st.rank===3?"🥉":"🏁"} ${ordinal(st.rank)} of ${st.total}`);
+  if(st.won&&st.ranked&&st.rank){const pl=st.played||st.total;lines.push(`${st.rank===1?"🥇":st.rank===2?"🥈":st.rank===3?"🥉":"🏁"} ${ordinal(st.rank)} of ${pl}`+(st.played>1?` · beat ${beatPct()}%`:""))}
   else if(!st.ranked&&!st.dq)lines.push("🧪 practice");
   lines.push(`🛠️ ${st.sw||software}`);
   lines.push(SITE);
@@ -529,11 +593,14 @@ async function loadBoard(){
   $("refreshBoard").hidden=false;empty.textContent="Loading…";
   const n=cur;
   try{
-    const rows=await rpc("get_board",{p_puzzle:n,p_player:player});
+    const [rows,cnt]=await Promise.all([rpc("get_board",{p_puzzle:n,p_player:player}),rpc("get_counts",{p_puzzle:n}).catch(()=>null)]);
     if(n!==cur)return;
+    const c=cnt&&cnt[0];
+    if(c&&st.done&&st.ranked&&(st.played!==c.played||st.solvedCount!==c.solved)){st.played=c.played;st.solvedCount=c.solved;save();render()}
     ol.innerHTML="";
-    if(!rows.length){empty.textContent=isToday()?"No solves yet today. Be the first.":"Nobody solved this one.";return}
-    empty.textContent=`${rows[0].total} solved`;
+    const countLine=c?`${c.played} played · ${c.solved} solved`:"";
+    if(!rows.length){empty.textContent=(isToday()?"No solves yet today. Be the first.":"Nobody solved this one.")+(c&&c.played?` (${countLine})`:"");return}
+    empty.textContent=countLine||`${rows[0].total} solved`;
     let prev=0;
     rows.forEach(r=>{
       if(prev&&r.rank>prev+1){const g=document.createElement("li");g.className="gap";g.textContent="⋯";ol.appendChild(g)}
@@ -590,6 +657,7 @@ async function finish(won,gaveUp){
   st.won=won&&!st.dq;
   save();render();
   if(st.won)confetti();
+  setTimeout(openModal,st.won?650:250);
   if(st.ranked){
     try{
       const secs=await rpc("finish_attempt",{p_puzzle:cur,p_player:player,p_tries:Math.max(1,st.guesses.length),p_solved:won,p_gave_up:gaveUp,p_software:software});
@@ -649,6 +717,10 @@ $("nameForm").addEventListener("submit",async e=>{
 $("prev").onclick=()=>cur>1&&load(cur-1);
 $("next").onclick=()=>cur<todayNum()&&load(cur+1);
 $("refreshBoard").onclick=loadBoard;
+$("openRes").onclick=openModal;
+$("closeRes").onclick=closeModal;
+$("overlay").addEventListener("click",e=>{if(e.target===$("overlay"))closeModal()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("overlay").hidden)closeModal()});
 $("copy").onclick=()=>{
   const t=shareText();
   const ok=()=>{$("copy").textContent="Copied";setTimeout(()=>$("copy").textContent="Copy result",1500)};
@@ -657,6 +729,7 @@ $("copy").onclick=()=>{
 };
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&cur!==todayNum()&&cur===todayNum()-1&&st.done)load(todayNum())});
 
+if(ONLINE){const d=new Date().toDateString();if(store.get("caddle-visit","")!==d){rpc("log_visit",{p_player:player}).then(()=>store.set("caddle-visit",d)).catch(()=>{})}}
 window.__caddle={makePart,keycaps,mmss};
 load(cur);
 })();

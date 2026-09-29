@@ -129,3 +129,53 @@ begin
 end $$;
 revoke execute on function public.set_name(uuid, text) from public;
 grant  execute on function public.set_name(uuid, text) to anon, authenticated;
+
+-- Visitor tracking: one row per device per day (anonymous ID only, nothing personal).
+create table if not exists public.visits (
+  day    date not null default current_date,
+  player uuid not null,
+  primary key (day, player)
+);
+alter table public.visits enable row level security;
+revoke all on table public.visits from anon, authenticated;
+
+create or replace function public.log_visit(p_player uuid)
+returns void
+language sql security definer set search_path = public as $$
+  insert into visits (player) values (p_player) on conflict do nothing;
+$$;
+
+-- How many people finished a puzzle, and how many solved it.
+create or replace function public.get_counts(p_puzzle int)
+returns table (played bigint, solved bigint)
+language sql stable security definer set search_path = public as $$
+  select count(*) filter (where finished_at is not null),
+         count(*) filter (where solved)
+  from attempts where puzzle = p_puzzle;
+$$;
+
+revoke execute on function public.log_visit(uuid) from public;
+revoke execute on function public.get_counts(int) from public;
+grant  execute on function public.log_visit(uuid) to anon, authenticated;
+grant  execute on function public.get_counts(int) to anon, authenticated;
+
+-- Your private stats page: run   select * from daily_stats;   in the SQL Editor.
+create or replace view public.daily_stats with (security_invoker = true) as
+select d.day,
+       coalesce(v.visitors, 0) as visitors,
+       coalesce(a.started, 0)  as started,
+       coalesce(a.finished, 0) as finished,
+       coalesce(a.solved, 0)   as solved,
+       a.fastest
+from (select generate_series(date '2026-09-01', current_date, '1 day')::date as day) d
+left join (select day, count(*) as visitors from visits group by day) v using (day)
+left join (
+  select date '2026-09-01' + (puzzle - 1) as day,
+         count(*) as started,
+         count(*) filter (where finished_at is not null) as finished,
+         count(*) filter (where solved) as solved,
+         to_char(min(finished_at - started_at) filter (where solved), 'MI:SS') as fastest
+  from attempts group by puzzle
+) a using (day)
+order by d.day desc;
+revoke all on public.daily_stats from anon, authenticated;
