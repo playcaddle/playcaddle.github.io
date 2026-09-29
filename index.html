@@ -1,118 +1,150 @@
 <!doctype html>
 <html lang="en">
 <head>
-<title>Caddle</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Caddle: a daily CAD speed-modeling puzzle. Model the part in Onshape, Fusion, or SOLIDWORKS, enter the mass, and share your time.">
+<title>Caddle</title>
+<meta name="description" content="Caddle: a daily CAD speed-modeling puzzle. Model the part in Onshape, Fusion, or SOLIDWORKS, enter the mass, and race the leaderboard.">
 <meta property="og:title" content="Caddle">
-<meta property="og:description" content="One part a day. Model it in any CAD program, enter the mass, share your time.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231f5fbf'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='white' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='3' fill='white'/%3E%3C/svg%3E">
-
+<meta property="og:description" content="One part a day. Model it in any CAD program, enter the mass, race the leaderboard.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23ff7a2f'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='white' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='3' fill='white'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: drafting sheet on the left as the hero, a narrow "lab bench" panel on the right; stacks on phones */
+/* Layout: colorful drafting sheet as the hero on the left, a stack of instrument cards on the right; stacks on phones.
+   Each part family carries its own hue (--hue), which tints the part, the title block, and the sheet's top band. */
 :root{
-  --bg:#e8edec; --sheet:#fbfdfc; --ink:#1b2729; --muted:#5a6a6d; --rule:#c7d2d1;
-  --accent:#1f5fbf; --accent-ink:#ffffff; --soft:#dfe7ec;
-  --good:#23894d; --warn:#b98a0f; --near:#cf6a1d; --bad:#8a9496;
+  --bg:#edf2f7; --sheet:#ffffff; --ink:#172230; --muted:#566677; --rule:#d3dde8;
+  --accent:#2563eb; --accent-ink:#ffffff; --soft:#e4ecf7;
+  --good:#16a34a; --warn:#eab308; --near:#f97316; --bad:#e11d48;
+  --plate:#f97316; --bush:#0ea5a4; --brak:#db2777; --hue:var(--plate);
+  --gold:#f5b301; --silver:#9aa7b4; --bronze:#c77b3a;
   --f-display:"Saira Condensed","Arial Narrow",sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0f1517; --sheet:#151e21; --ink:#dfe8e7; --muted:#8fa0a2; --rule:#2b393c;
-  --accent:#7fb0ff; --accent-ink:#0b1420; --soft:#1d2a33;
-  --good:#4cc47f; --warn:#e2b93b; --near:#f08a3e; --bad:#6f7d80; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#0f1517; --sheet:#151e21; --ink:#dfe8e7; --muted:#8fa0a2; --rule:#2b393c;
-  --accent:#7fb0ff; --accent-ink:#0b1420; --soft:#1d2a33;
-  --good:#4cc47f; --warn:#e2b93b; --near:#f08a3e; --bad:#6f7d80; color-scheme:dark}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0d1420; --sheet:#141e2c; --ink:#e3eaf3; --muted:#93a3b5; --rule:#263447;
+  --accent:#6aa0ff; --accent-ink:#0b1322; --soft:#1b2a3f;
+  --good:#34d399; --warn:#facc15; --near:#fb923c; --bad:#fb7185;
+  --plate:#fb923c; --bush:#2dd4bf; --brak:#f472b6;
+  --gold:#facc15; --silver:#b8c4d0; --bronze:#e0985a; color-scheme:dark}}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
-.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:20px 40px;display:grid;gap:18px}
-header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
-.brand h1{font-family:var(--f-display);font-weight:800;font-size:2.6rem;line-height:1;margin:0;letter-spacing:.01em}
-.brand p{margin:4px 0 0;color:var(--muted);max-width:52ch}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+[hidden]{display:none!important}
+.wrap{max-width:1200px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:grid;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px}
+.logo{display:flex;gap:5px;margin:0}
+.logo span{display:grid;place-items:center;width:44px;height:48px;border-radius:6px;font-family:var(--f-display);font-weight:800;font-size:2rem;color:#fff;line-height:1}
+.logo span:nth-child(1){background:var(--good)}
+.logo span:nth-child(2){background:var(--warn);color:#1a1a1a}
+.logo span:nth-child(3){background:var(--near)}
+.logo span:nth-child(4){background:var(--accent);color:var(--accent-ink)}
+.logo span:nth-child(5){background:var(--bush)}
+.logo span:nth-child(6){background:var(--brak)}
+.tag{margin:8px 0 0;color:var(--muted);max-width:56ch}
 .nav{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:.9rem}
-.nav button{width:34px;height:34px}
-.nav .lbl{min-width:150px;text-align:center}
-button{font:inherit;cursor:pointer;border:1px solid var(--rule);background:var(--sheet);color:var(--ink);border-radius:6px;padding:8px 12px}
+.nav button{width:36px;height:36px;padding:0}
+.nav .lbl{min-width:160px;text-align:center}
+button{font:inherit;cursor:pointer;border:1px solid var(--rule);background:var(--sheet);color:var(--ink);border-radius:7px;padding:8px 12px}
 button:hover:not(:disabled){border-color:var(--accent)}
-button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 button:disabled{opacity:.4;cursor:default}
 .primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
-.grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start}
-@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
-.sheet{background:var(--sheet);border:1px solid var(--rule);border-radius:4px;position:relative;overflow:hidden}
+.ghost{background:transparent;color:var(--muted)}
+.danger{background:var(--bad);border-color:var(--bad);color:#fff;font-weight:600}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:18px;align-items:start}
+@media (max-width:920px){.grid{grid-template-columns:minmax(0,1fr)}}
+.sheet{background:var(--sheet);border:1px solid var(--rule);border-radius:8px;position:relative;overflow:hidden;border-top:6px solid var(--hue)}
 .sheet svg{display:block;width:100%;height:auto}
-.sheet svg.veiled{filter:blur(11px);opacity:.55}
+.sheet svg.veiled{filter:blur(11px);opacity:.5}
 .veil{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px}
-.veil div{display:grid;gap:10px;justify-items:center;max-width:36ch}
-.veil strong{font-family:var(--f-display);font-size:1.6rem;line-height:1.1}
+.veil div{display:grid;gap:10px;justify-items:center;max-width:38ch}
+.veil strong{font-family:var(--f-display);font-size:1.7rem;line-height:1.1}
 .veil span{color:var(--muted)}
-.panel{display:grid;gap:14px}
-.card{background:var(--sheet);border:1px solid var(--rule);border-radius:6px;padding:14px;display:grid;gap:10px}
+.ribbon{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;pointer-events:none}
+.pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:.75rem;letter-spacing:.04em;padding:4px 10px;border-radius:999px;background:var(--hue);color:#fff;font-weight:500}
+.pill.muted{background:var(--soft);color:var(--ink)}
+.panel{display:grid;gap:14px;min-width:0}
+.card{background:var(--sheet);border:1px solid var(--rule);border-radius:8px;padding:14px;display:grid;gap:10px;min-width:0}
 .eyebrow{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.clock{font-family:var(--f-display);font-weight:700;font-size:3.2rem;line-height:1;font-variant-numeric:tabular-nums}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.clockrow{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.clock{font-family:var(--f-display);font-weight:800;font-size:3.4rem;line-height:1;font-variant-numeric:tabular-nums;color:var(--hue)}
+.status{font-size:.82rem;color:var(--muted);text-align:right}
+.field{display:grid;gap:4px}
+.field input{font:inherit;padding:8px 10px;border:1px solid var(--rule);border-radius:7px;background:var(--bg);color:var(--ink);width:100%}
 .seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
 .seg button{padding:7px 4px;font-size:.82rem}
 .seg button[aria-pressed="true"]{background:var(--soft);border-color:var(--accent);font-weight:600}
 .entry{display:flex;gap:8px}
 .entry label{position:relative;flex:1;min-width:0}
-.entry input{width:100%;font-family:var(--f-mono);font-size:1.1rem;padding:9px 34px 9px 10px;border:1px solid var(--rule);border-radius:6px;background:var(--bg);color:var(--ink)}
+.entry input{width:100%;font-family:var(--f-mono);font-size:1.1rem;padding:9px 34px 9px 10px;border:1px solid var(--rule);border-radius:7px;background:var(--bg);color:var(--ink)}
 .entry label::after{content:"g";position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-family:var(--f-mono)}
 .msg{min-height:1.2em;font-size:.86rem;color:var(--muted)}
 .tries{display:grid;gap:6px;margin:0;padding:0;list-style:none}
-.tries li{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;font-family:var(--f-mono);font-size:.9rem;padding:6px 8px;border-radius:5px;border-left:4px solid var(--bad);background:var(--bg);font-variant-numeric:tabular-nums}
-.tries li.good{border-color:var(--good)} .tries li.warn{border-color:var(--warn)} .tries li.near{border-color:var(--near)}
-.tries li.empty{border-left-color:var(--rule);color:var(--muted)}
+.tries li{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;font-family:var(--f-mono);font-size:.9rem;padding:7px 9px;border-radius:6px;background:color-mix(in srgb,var(--bad) 14%,var(--sheet));border-left:5px solid var(--bad);font-variant-numeric:tabular-nums}
+.tries li.good{border-color:var(--good);background:color-mix(in srgb,var(--good) 16%,var(--sheet))}
+.tries li.warn{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 18%,var(--sheet))}
+.tries li.near{border-color:var(--near);background:color-mix(in srgb,var(--near) 16%,var(--sheet))}
+.tries li.empty{border-left-color:var(--rule);background:var(--bg);color:var(--muted)}
 .tries .d{color:var(--muted)}
-.result{display:grid;gap:8px}
-.result h2{margin:0;font-family:var(--f-display);font-size:1.5rem;line-height:1.1}
-pre.share{margin:0;font-family:var(--f-mono);font-size:.9rem;background:var(--bg);border:1px dashed var(--rule);border-radius:5px;padding:10px;white-space:pre-wrap}
+.key{display:flex;gap:10px;flex-wrap:wrap;font-size:.78rem;color:var(--muted)}
+.key i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.giveup{justify-self:start;font-size:.85rem}
+.confirm{display:grid;gap:8px;padding:10px;border-radius:7px;background:color-mix(in srgb,var(--bad) 10%,var(--sheet));border:1px solid color-mix(in srgb,var(--bad) 40%,var(--rule))}
+.confirm p{margin:0;font-size:.88rem}
+.result h2{margin:0;font-family:var(--f-display);font-size:1.6rem;line-height:1.1}
+pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;background:var(--bg);border:1px dashed var(--rule);border-radius:6px;padding:10px 12px;white-space:pre-wrap;word-break:break-word}
+.next{font-family:var(--f-mono);font-size:.85rem;color:var(--muted)}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
 .stats b{display:block;font-family:var(--f-display);font-size:1.5rem;font-variant-numeric:tabular-nums}
 .stats span{font-size:.75rem;color:var(--muted)}
+.board{margin:0;padding:0;list-style:none;display:grid;gap:4px}
+.board li{display:grid;grid-template-columns:34px minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:6px 8px;border-radius:6px;font-size:.9rem;font-variant-numeric:tabular-nums}
+.board li:nth-child(odd){background:var(--bg)}
+.board li.me{background:color-mix(in srgb,var(--accent) 16%,var(--sheet));outline:1px solid var(--accent)}
+.board .rk{font-family:var(--f-display);font-weight:800;font-size:1.05rem;text-align:center}
+.board .r1 .rk{color:var(--gold)} .board .r2 .rk{color:var(--silver)} .board .r3 .rk{color:var(--bronze)}
+.board .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.board .sw{font-size:.72rem;color:var(--muted);font-family:var(--f-mono)}
+.board .tm{font-family:var(--f-mono);font-weight:500}
+.board .gap{text-align:center;color:var(--muted);background:none!important;display:block;padding:0}
+.boardhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.boardhead button{padding:4px 10px;font-size:.8rem}
+.empty{font-size:.88rem;color:var(--muted)}
 .help ol{margin:0;padding-left:20px;display:grid;gap:4px;font-size:.9rem}
 .help p{margin:0;font-size:.85rem;color:var(--muted)}
 .rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
-.rules div{font-size:.9rem;color:var(--muted)}
-.rules b{display:block;color:var(--ink);font-family:var(--f-display);font-size:1.1rem}
-.key{display:flex;gap:10px;flex-wrap:wrap;font-size:.8rem;color:var(--muted)}
-.key i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
-/* drawing classes */
+.rules div{font-size:.9rem;color:var(--muted);padding-left:12px;border-left:4px solid var(--c)}
+.rules b{display:block;color:var(--ink);font-family:var(--f-display);font-size:1.12rem}
+/* drawing */
 .ln{stroke:var(--ink);stroke-width:1.6;fill:none}
-.fillp{fill:var(--soft);stroke:var(--ink);stroke-width:1.6}
+.fillp{fill:color-mix(in srgb,var(--hue) 22%,var(--sheet));stroke:var(--ink);stroke-width:1.6}
+.hole{fill:var(--sheet);stroke:var(--ink);stroke-width:1.6}
 .hid{stroke:var(--ink);stroke-width:1;stroke-dasharray:5 3;fill:none;opacity:.8}
-.ctr{stroke:var(--accent);stroke-width:.8;stroke-dasharray:12 3 2 3;fill:none;opacity:.8}
+.ctr{stroke:var(--hue);stroke-width:.9;stroke-dasharray:12 3 2 3;fill:none}
 .dm{stroke:var(--accent);stroke-width:.9;fill:none}
 .arh{fill:var(--accent)}
-.dt{fill:var(--accent);font-family:var(--f-mono);font-size:12px}
+.dt{fill:var(--accent);font-family:var(--f-mono);font-size:12px;font-weight:500}
 .vt{fill:var(--muted);font-family:var(--f-mono);font-size:10px;letter-spacing:.08em}
-.frame{stroke:var(--ink);stroke-width:1.2;fill:none}
+.frame{stroke:var(--ink);stroke-width:1.2;fill:var(--sheet)}
+.tbband{fill:var(--hue)}
 .tbt{fill:var(--ink);font-family:var(--f-mono);font-size:11px}
 .tbl{fill:var(--muted);font-family:var(--f-mono);font-size:8.5px;letter-spacing:.06em}
-.tbb{fill:var(--ink);font-family:var(--f-display);font-weight:700;font-size:17px}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.tbb{fill:#fff;font-family:var(--f-display);font-weight:700;font-size:17px}
+.tbn{fill:#fff;font-family:var(--f-mono);font-size:10px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
-<style>
-html{color-scheme:light}
-body{margin:0}
-img{max-width:100%}
-[hidden]{display:none!important}
-</style>
+<script src="config.js"></script>
 </head>
 <body>
-
-
 <div class="wrap">
   <header>
-    <div class="brand">
-      <h1>Caddle</h1>
-      <p>One part a day. Model it in any CAD program, enter the mass in grams, share your time.</p>
+    <div>
+      <h1 class="logo" aria-label="Caddle"><span>C</span><span>A</span><span>D</span><span>D</span><span>L</span><span>E</span></h1>
+      <p class="tag">One part a day. Model it in any CAD program, enter the mass in grams, and race the leaderboard.</p>
     </div>
     <div class="nav">
       <button id="prev" aria-label="Previous puzzle">‹</button>
@@ -122,21 +154,39 @@ img{max-width:100%}
   </header>
 
   <div class="grid">
-    <div class="sheet">
-      <svg id="dwg" viewBox="0 0 760 500" role="img" aria-label="Engineering drawing of today's part"></svg>
-      <div class="veil" id="veil">
-        <div>
-          <strong>Drawing hidden</strong>
-          <span>The clock starts when you reveal it. Have your CAD program open first.</span>
-          <button class="primary" id="reveal">Start timer and reveal</button>
+    <div class="panel">
+      <div class="sheet">
+        <svg id="dwg" viewBox="0 0 760 500" role="img" aria-label="Engineering drawing of the part"></svg>
+        <div class="ribbon"><span class="pill" id="kindPill">PART</span><span class="pill muted" id="modePill" hidden></span></div>
+        <div class="veil" id="veil">
+          <div>
+            <strong id="veilTitle">Drawing hidden</strong>
+            <span id="veilText">The clock starts when you reveal it, and you only get one ranked run per day. Open your CAD program first.</span>
+            <button class="primary" id="reveal">Start timer and reveal</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="rules">
+          <div style="--c:var(--good)"><b>Same part for everyone</b>A new drawing unlocks at midnight your time. Every dimension is in millimeters.</div>
+          <div style="--c:var(--warn)"><b>Use the listed density</b>Set a custom material with the density in the title block. Library materials can be slightly off.</div>
+          <div style="--c:var(--near)"><b>Five tries, ±1%</b>Anything within 1% of the true mass counts. Misses tell you whether you're high or low.</div>
+          <div style="--c:var(--bad)"><b>One ranked run</b>The server times you from reveal to solve. Refreshing doesn't reset anything; a finished part is yours to admire until tomorrow.</div>
         </div>
       </div>
     </div>
 
     <div class="panel">
       <div class="card">
-        <div class="eyebrow">Time</div>
-        <div class="clock" id="clock">--:--</div>
+        <div class="clockrow">
+          <div><div class="eyebrow">Time</div><div class="clock" id="clock">--:--</div></div>
+          <div class="status" id="rankStatus"></div>
+        </div>
+        <div class="field">
+          <label class="eyebrow" for="pname">Leaderboard name</label>
+          <input id="pname" maxlength="20" autocomplete="nickname" placeholder="Anonymous">
+        </div>
         <div class="eyebrow">Modeling in</div>
         <div class="seg" id="sw">
           <button data-sw="Onshape" aria-pressed="true">Onshape</button>
@@ -146,7 +196,7 @@ img{max-width:100%}
         </div>
       </div>
 
-      <div class="card">
+      <div class="card" id="playCard">
         <div class="eyebrow">Your mass · pass band ±1%</div>
         <form class="entry" id="form" novalidate>
           <label><input id="guess" inputmode="decimal" autocomplete="off" placeholder="e.g. 108.4" aria-label="Mass in grams" disabled></label>
@@ -155,13 +205,22 @@ img{max-width:100%}
         <div class="msg" id="msg">Reveal the drawing to start.</div>
         <ol class="tries" id="tries"></ol>
         <div class="key"><span><i style="background:var(--good)"></i>within 1%</span><span><i style="background:var(--warn)"></i>within 5%</span><span><i style="background:var(--near)"></i>within 15%</span><span><i style="background:var(--bad)"></i>further</span></div>
+        <button class="ghost giveup" id="giveup" hidden>Give up</button>
+        <div class="confirm" id="confirm" hidden>
+          <p>Give up on this part? Your run ends now and won't be ranked.</p>
+          <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="danger" id="giveYes">Yes, give up</button>
+            <button id="giveNo">Keep going</button>
+          </div>
+        </div>
       </div>
 
       <div class="card result" id="result" hidden>
         <h2 id="resTitle"></h2>
-        <div id="resBody" class="msg"></div>
+        <div class="msg" id="resBody"></div>
         <pre class="share" id="shareText"></pre>
         <button class="primary" id="copy">Copy result</button>
+        <div class="next" id="nextIn"></div>
         <div class="stats">
           <div><b id="stPlayed">0</b><span>played</span></div>
           <div><b id="stWon">0</b><span>solved</span></div>
@@ -169,20 +228,17 @@ img{max-width:100%}
         </div>
       </div>
 
+      <div class="card">
+        <div class="boardhead"><div class="eyebrow" id="boardTitle">Leaderboard</div><button id="refreshBoard">Refresh</button></div>
+        <ol class="board" id="board"></ol>
+        <div class="empty" id="boardEmpty"></div>
+      </div>
+
       <div class="card help">
         <div class="eyebrow" id="helpTitle">Getting mass in Onshape</div>
         <ol id="helpSteps"></ol>
-        <p>Check that mass is reported in grams, not kilograms or pounds.</p>
+        <p>Check that the mass is shown in grams, not kilograms or pounds.</p>
       </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="rules">
-      <div><b>Same part for everyone</b>A new drawing unlocks at midnight your time. All dimensions are in millimeters.</div>
-      <div><b>Set the density</b>Use the density in the title block exactly. Library materials in your CAD program may differ slightly.</div>
-      <div><b>Five tries</b>Anything within ±1% of the true mass counts. Each miss tells you if you're high or low.</div>
-      <div><b>Honor timer</b>The clock runs from reveal to your correct answer. Leaving the page doesn't pause it.</div>
     </div>
   </div>
 </div>
@@ -190,7 +246,9 @@ img{max-width:100%}
 <script>
 (function(){
 const EPOCH = new Date(2026,8,1); // Sept 1 2026 = puzzle #1
-const MAX = 5, TOL = 0.01;
+const MAX = 5, TOL = 0.01, SITE = "playcaddle.github.io";
+const CFG = window.CADDLE_CONFIG || {};
+const ONLINE = !!(CFG.supabaseUrl && CFG.supabaseKey);
 const MATERIALS = [
   {name:"ALUMINUM 6061", rho:2.70},
   {name:"STEEL 1018", rho:7.87},
@@ -198,6 +256,11 @@ const MATERIALS = [
   {name:"BRASS C360", rho:8.50},
   {name:"PLA PLASTIC", rho:1.24}
 ];
+const KIND = {
+  plate:{label:"MOUNTING PLATE", emoji:"🔩", hue:"var(--plate)"},
+  bushing:{label:"FLANGED BUSHING", emoji:"⚙️", hue:"var(--bush)"},
+  bracket:{label:"ANGLE BRACKET", emoji:"📐", hue:"var(--brak)"}
+};
 const HELP = {
   Onshape:["Right-click the part in the parts list and choose Assign material.","Pick Custom and enter the density from the title block (g/cm³).","Open Mass properties from the right-side panel and read the mass."],
   Fusion:["Right-click the body in the browser and choose Physical Material.","Duplicate a material and set its density to the title-block value.","Right-click the body, choose Properties, and read the mass."],
@@ -205,247 +268,318 @@ const HELP = {
   Other:["Set the part's density to the title-block value.","Open your program's mass or physical properties tool.","Or read the volume in mm³ and multiply: mass (g) = volume ÷ 1000 × density."]
 };
 
-// ---------- storage (optional) ----------
+// ---------- storage ----------
 const store = {
   get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},
   set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 };
+let player = store.get("caddle-player",null);
+if(!player){player=(crypto.randomUUID?crypto.randomUUID():"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==="x"?r:(r&3|8)).toString(16)}));store.set("caddle-player",player)}
 
-// ---------- date helpers ----------
-function todayNum(){
-  const t=new Date(); const a=new Date(t.getFullYear(),t.getMonth(),t.getDate());
-  return Math.round((a-EPOCH)/86400000)+1;
+// ---------- server ----------
+async function rpc(fn,body){
+  const h={"Content-Type":"application/json",apikey:CFG.supabaseKey};
+  if(CFG.supabaseKey.startsWith("eyJ"))h.Authorization="Bearer "+CFG.supabaseKey;
+  const r=await fetch(CFG.supabaseUrl.replace(/\/$/,"")+"/rest/v1/rpc/"+fn,{method:"POST",headers:h,body:JSON.stringify(body)});
+  if(!r.ok)throw new Error(await r.text());
+  return r.json();
 }
+
+// ---------- dates ----------
+function todayNum(){const t=new Date();const a=new Date(t.getFullYear(),t.getMonth(),t.getDate());return Math.round((a-EPOCH)/86400000)+1}
 function dateOf(n){const d=new Date(EPOCH);d.setDate(d.getDate()+n-1);return d}
 function fmtDate(d){return d.toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"})}
 
-// ---------- seeded random ----------
+// ---------- seeded random + parts ----------
 function rng(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
-function mk(r){return{
-  int:(a,b,s=1)=>{const n=Math.floor((b-a)/s)+1;return a+Math.floor(r()*n)*s},
-  pick:arr=>arr[Math.floor(r()*arr.length)]
-}}
+function mk(r){return{int:(a,b,s=1)=>{const n=Math.floor((b-a)/s)+1;return a+Math.floor(r()*n)*s},pick:arr=>arr[Math.floor(r()*arr.length)]}}
 const fmt=n=>Number.isInteger(n)?String(n):n.toFixed(1);
-
-// ---------- part generators ----------
 function makePart(n){
   const R=mk(rng(n*9973+17));
   const mat=MATERIALS[(n*3+R.int(0,4))%MATERIALS.length];
   const kind=["plate","bushing","bracket"][(n-1)%3];
   let p;
   if(kind==="plate"){
-    const L=R.int(70,130,5), W=R.int(40,70,5), T=R.int(4,12);
-    const d=R.pick([5.5,6,6.6,8,9]); const e=Math.max(R.int(8,12),Math.ceil(d/2+4));
-    let D=R.pick([0,12,16,20,25]); if(D>W-2*e-4||D>L-2*e-4)D=0;
-    const V=T*(L*W-4*Math.PI*d*d/4-(D?Math.PI*D*D/4:0));
-    p={kind,name:"MOUNTING PLATE",L,W,T,d,e,D,V};
+    const L=R.int(70,130,5),W=R.int(40,70,5),T=R.int(4,12);
+    const d=R.pick([5.5,6,6.6,8,9]);const e=Math.max(R.int(8,12),Math.ceil(d/2+4));
+    let D=R.pick([0,12,16,20,25]);if(D>W-2*e-4||D>L-2*e-4)D=0;
+    p={kind,L,W,T,d,e,D,V:T*(L*W-4*Math.PI*d*d/4-(D?Math.PI*D*D/4:0))};
   }else if(kind==="bushing"){
-    const D1=R.int(40,70,2), D2=R.int(20,D1-12,2), d=R.int(8,D2-8), H1=R.int(5,12), H2=R.int(15,40);
-    const V=Math.PI/4*(D1*D1*H1+D2*D2*H2-d*d*(H1+H2));
-    p={kind,name:"FLANGED BUSHING",D1,D2,d,H1,H2,V};
+    const D1=R.int(40,70,2),D2=R.int(20,D1-12,2),d=R.int(8,D2-8),H1=R.int(5,12),H2=R.int(15,40);
+    p={kind,D1,D2,d,H1,H2,V:Math.PI/4*(D1*D1*H1+D2*D2*H2-d*d*(H1+H2))};
   }else{
-    const L=R.int(60,100,5), W=R.int(25,50,5), H=R.int(35,80,5), T=R.int(3,8);
-    const d=R.pick([4.5,5.5,6.6]); const p1=R.int(10,20);
-    const maxSp=Math.floor((L-T-8-p1)/5)*5; const sp=R.int(15,Math.max(15,maxSp),5);
-    const V=T*W*L+T*W*(H-T)-2*Math.PI*d*d/4*T;
-    p={kind,name:"ANGLE BRACKET",L,W,H,T,d,p1,sp,V};
+    const L=R.int(60,100,5),W=R.int(25,50,5),H=R.int(35,80,5),T=R.int(3,8);
+    const d=R.pick([4.5,5.5,6.6]);const p1=R.int(10,20);
+    const maxSp=Math.floor((L-T-8-p1)/5)*5;const sp=R.int(15,Math.max(15,maxSp),5);
+    p={kind,L,W,H,T,d,p1,sp,V:T*W*L+T*W*(H-T)-2*Math.PI*d*d/4*T};
   }
-  p.mat=mat; p.mass=p.V/1000*mat.rho;
+  p.name=KIND[kind].label;p.mat=mat;p.mass=p.V/1000*mat.rho;
   return p;
 }
 
-// ---------- SVG drawing helpers ----------
+// ---------- SVG drawing ----------
 const S=[];
 const ln=(x1,y1,x2,y2,c="ln")=>S.push(`<line class="${c}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`);
 const rect=(x,y,w,h,c="fillp")=>S.push(`<rect class="${c}" x="${x}" y="${y}" width="${w}" height="${h}"/>`);
-const circ=(x,y,r,c="ln")=>S.push(`<circle class="${c}" cx="${x}" cy="${y}" r="${r}"/>`);
+const circ=(x,y,r,c="hole")=>S.push(`<circle class="${c}" cx="${x}" cy="${y}" r="${r}"/>`);
 const txt=(x,y,t,c="dt",a="middle",rot)=>S.push(`<text class="${c}" x="${x}" y="${y}" text-anchor="${a}"${rot?` transform="rotate(${rot} ${x} ${y})"`:""}>${t}</text>`);
-function dimH(xa,xb,yRef,yDim,t){
-  const s=Math.sign(yDim-yRef)||-1;
-  ln(xa,yRef+3*s,xa,yDim+5*s,"dm"); ln(xb,yRef+3*s,xb,yDim+5*s,"dm");
-  S.push(`<line class="dm" x1="${xa}" y1="${yDim}" x2="${xb}" y2="${yDim}" marker-start="url(#ar)" marker-end="url(#ar)"/>`);
-  txt((xa+xb)/2,yDim-4,t);
-}
-function dimV(ya,yb,xRefA,xDim,t,xRefB){
-  if(xRefB===undefined)xRefB=xRefA;
-  const s=Math.sign(xDim-xRefA)||-1;
-  ln(xRefA+3*s,ya,xDim+5*s,ya,"dm"); ln(xRefB+3*s,yb,xDim+5*s,yb,"dm");
-  S.push(`<line class="dm" x1="${xDim}" y1="${ya}" x2="${xDim}" y2="${yb}" marker-start="url(#ar)" marker-end="url(#ar)"/>`);
-  const x=xDim-4, y=(ya+yb)/2; txt(x,y,t,"dt","middle",-90);
-}
-function leader(x1,y1,x2,y2,t){
-  S.push(`<polyline class="dm" points="${x1},${y1} ${x2},${y2} ${x2+14},${y2}" marker-start="url(#ar)"/>`);
-  txt(x2+18,y2+4,t,"dt","start");
-}
+function dimH(xa,xb,yRef,yDim,t){const s=Math.sign(yDim-yRef)||-1;ln(xa,yRef+3*s,xa,yDim+5*s,"dm");ln(xb,yRef+3*s,xb,yDim+5*s,"dm");S.push(`<line class="dm" x1="${xa}" y1="${yDim}" x2="${xb}" y2="${yDim}" marker-start="url(#ar)" marker-end="url(#ar)"/>`);txt((xa+xb)/2,yDim-4,t)}
+function dimV(ya,yb,xRefA,xDim,t,xRefB){if(xRefB===undefined)xRefB=xRefA;const s=Math.sign(xDim-xRefA)||-1;ln(xRefA+3*s,ya,xDim+5*s,ya,"dm");ln(xRefB+3*s,yb,xDim+5*s,yb,"dm");S.push(`<line class="dm" x1="${xDim}" y1="${ya}" x2="${xDim}" y2="${yb}" marker-start="url(#ar)" marker-end="url(#ar)"/>`);txt(xDim-4,(ya+yb)/2,t,"dt","middle",-90)}
+function leader(x1,y1,x2,y2,t){S.push(`<polyline class="dm" points="${x1},${y1} ${x2},${y2} ${x2+14},${y2}" marker-start="url(#ar)"/>`);txt(x2+18,y2+4,t,"dt","start")}
 function cross(x,y,r){ln(x-r-5,y,x+r+5,y,"ctr");ln(x,y-r-5,x,y+r+5,"ctr")}
-
 function draw(p,n){
   S.length=0;
   S.push(`<defs><marker id="ar" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="arh" d="M0,1.5 L10,5 L0,8.5 z"/></marker></defs>`);
-  S.push(`<rect class="frame" x="10" y="10" width="740" height="480" style="fill:var(--sheet)"/>`);
-  const cx=300;
+  S.push(`<rect class="frame" x="10" y="10" width="740" height="480"/>`);
+  const cx=300,a=Math.SQRT1_2;
   if(p.kind==="plate"){
     const s=Math.min(440/p.L,250/(p.W+p.T));
-    const w=p.L*s,h=p.W*s,x0=cx-w/2,y0=80,t=p.T*s,y1=y0+h+60;
-    txt(x0,y0-50,"TOP","vt","start");
-    rect(x0,y0,w,h);
-    const hr=p.d/2*s,es=p.e*s;
+    const w=p.L*s,h=p.W*s,x0=cx-w/2,y0=80,t=p.T*s,y1=y0+h+60,hr=p.d/2*s,es=p.e*s;
+    txt(x0,y0-50,"TOP","vt","start");rect(x0,y0,w,h);
     [[x0+es,y0+es],[x0+w-es,y0+es],[x0+es,y0+h-es],[x0+w-es,y0+h-es]].forEach(([x,y])=>{circ(x,y,hr);cross(x,y,hr)});
     if(p.D){circ(cx,y0+h/2,p.D/2*s);cross(cx,y0+h/2,p.D/2*s)}
-    dimH(x0,x0+w,y0,y0-34,fmt(p.L));
-    dimH(x0,x0+es,y0,y0-14,fmt(p.e));
-    dimV(y0,y0+h,x0,x0-38,fmt(p.W));
-    dimV(y0,y0+es,x0,x0-16,fmt(p.e));
-    const a=Math.SQRT1_2;
+    dimH(x0,x0+w,y0,y0-34,fmt(p.L));dimH(x0,x0+es,y0,y0-14,fmt(p.e));
+    dimV(y0,y0+h,x0,x0-38,fmt(p.W));dimV(y0,y0+es,x0,x0-16,fmt(p.e));
     leader(x0+w-es+hr*a,y0+h-es+hr*a,x0+w+30,y0+h+18,`4× Ø${fmt(p.d)} THRU`);
     if(p.D){const R=p.D/2*s;leader(cx+R*a,y0+h/2-R*a,x0+w+30,y0+h*0.3,`Ø${fmt(p.D)} THRU`)}
-    txt(x0,y1-10,"FRONT","vt","start");
-    rect(x0,y1,w,t);
-    const xs=[x0+es,x0+w-es]; xs.forEach(x=>{ln(x-hr,y1,x-hr,y1+t,"hid");ln(x+hr,y1,x+hr,y1+t,"hid");ln(x,y1-6,x,y1+t+6,"ctr")});
+    txt(x0,y1-10,"FRONT","vt","start");rect(x0,y1,w,t);
+    [x0+es,x0+w-es].forEach(x=>{ln(x-hr,y1,x-hr,y1+t,"hid");ln(x+hr,y1,x+hr,y1+t,"hid");ln(x,y1-6,x,y1+t+6,"ctr")});
     if(p.D){const R=p.D/2*s;ln(cx-R,y1,cx-R,y1+t,"hid");ln(cx+R,y1,cx+R,y1+t,"hid");ln(cx,y1-6,cx,y1+t+6,"ctr")}
     dimV(y1,y1+t,x0+w,x0+w+22,fmt(p.T));
     txt(x0,y1+t+34,"HOLE PATTERN SYMMETRIC ABOUT PART CENTER","vt","start");
   }else if(p.kind==="bushing"){
-    const H=p.H1+p.H2, s=Math.min(280/p.D1,220/(p.D1+H));
-    const r1=p.D1/2*s,r2=p.D2/2*s,rb=p.d/2*s;
-    const cy=80+r1, y1=80+2*r1+60, yb=y1+H*s, yf=y1+p.H2*s;
+    const H=p.H1+p.H2,s=Math.min(280/p.D1,220/(p.D1+H));
+    const r1=p.D1/2*s,r2=p.D2/2*s,rb=p.d/2*s,cy=80+r1,y1=80+2*r1+60,yb=y1+H*s,yf=y1+p.H2*s;
     txt(cx-r1,64,"TOP","vt","start");
-    circ(cx,cy,r1,"fillp");circ(cx,cy,r2);circ(cx,cy,rb);cross(cx,cy,r1);
-    const a=Math.SQRT1_2;
+    circ(cx,cy,r1,"fillp");circ(cx,cy,r2,"fillp");circ(cx,cy,rb);cross(cx,cy,r1);
     leader(cx+rb*a,cy-rb*a,cx+r1+40,cy-r1+6,`Ø${fmt(p.d)} THRU`);
     txt(cx-r1,y1-40,"FRONT","vt","start");
     S.push(`<polygon class="fillp" points="${cx-r2},${y1} ${cx+r2},${y1} ${cx+r2},${yf} ${cx+r1},${yf} ${cx+r1},${yb} ${cx-r1},${yb} ${cx-r1},${yf} ${cx-r2},${yf}"/>`);
     ln(cx-rb,y1,cx-rb,yb,"hid");ln(cx+rb,y1,cx+rb,yb,"hid");ln(cx,y1-10,cx,yb+10,"ctr");
-    dimH(cx-r2,cx+r2,y1,y1-16,`Ø${fmt(p.D2)}`);
-    dimH(cx-r1,cx+r1,yb,yb+22,`Ø${fmt(p.D1)}`);
-    dimV(yf,yb,cx+r1,cx+r1+24,fmt(p.H1));
-    dimV(y1,yb,cx+r2,cx+r1+52,fmt(H),cx+r1);
+    dimH(cx-r2,cx+r2,y1,y1-16,`Ø${fmt(p.D2)}`);dimH(cx-r1,cx+r1,yb,yb+22,`Ø${fmt(p.D1)}`);
+    dimV(yf,yb,cx+r1,cx+r1+24,fmt(p.H1));dimV(y1,yb,cx+r2,cx+r1+52,fmt(H),cx+r1);
   }else{
     const s=Math.min(440/p.L,240/(p.W+p.H));
     const w=p.L*s,wd=p.W*s,x0=cx-w/2,y0=80,t=p.T*s,y1=y0+wd+60,yb=y1+p.H*s,hr=p.d/2*s;
-    const hx=[x0+p.p1*s,x0+(p.p1+p.sp)*s], hy=y0+wd/2;
-    txt(x0,y0-44,"TOP","vt","start");
-    rect(x0,y0,w,wd); ln(x0+w-t,y0,x0+w-t,y0+wd);
+    const hx=[x0+p.p1*s,x0+(p.p1+p.sp)*s],hy=y0+wd/2;
+    txt(x0,y0-44,"TOP","vt","start");rect(x0,y0,w,wd);ln(x0+w-t,y0,x0+w-t,y0+wd);
     hx.forEach(x=>{circ(x,hy,hr);cross(x,hy,hr)});
-    dimH(x0,hx[0],y0,y0-16,fmt(p.p1)); dimH(hx[0],hx[1],y0,y0-16,fmt(p.sp));
+    dimH(x0,hx[0],y0,y0-16,fmt(p.p1));dimH(hx[0],hx[1],y0,y0-16,fmt(p.sp));
     dimV(y0,y0+wd,x0,x0-22,fmt(p.W));
-    const a=Math.SQRT1_2;
     leader(hx[1]+hr*a,hy+hr*a,x0+w+30,y0+wd+20,`2× Ø${fmt(p.d)} THRU`);
     txt(x0,y1-34,"FRONT","vt","start");
     S.push(`<polygon class="fillp" points="${x0},${yb} ${x0+w},${yb} ${x0+w},${y1} ${x0+w-t},${y1} ${x0+w-t},${yb-t} ${x0},${yb-t}"/>`);
     hx.forEach(x=>{ln(x-hr,yb-t,x-hr,yb,"hid");ln(x+hr,yb-t,x+hr,yb,"hid");ln(x,yb-t-6,x,yb+6,"ctr")});
-    dimH(x0,x0+w,yb,yb+22,fmt(p.L));
-    dimV(y1,yb,x0+w,x0+w+24,fmt(p.H));
-    dimV(yb-t,yb,x0,x0-20,fmt(p.T));
-    dimH(x0+w-t,x0+w,y1,y1-14,fmt(p.T));
+    dimH(x0,x0+w,yb,yb+22,fmt(p.L));dimV(y1,yb,x0+w,x0+w+24,fmt(p.H));
+    dimV(yb-t,yb,x0,x0-20,fmt(p.T));dimH(x0+w-t,x0+w,y1,y1-14,fmt(p.T));
     txt(x0+w+30,y0+wd+44,"HOLES CENTERED ON WIDTH","vt","start");
   }
-  // title block
   const bx=470,by=400,bw=270,bh=80;
-  S.push(`<rect class="frame" x="${bx}" y="${by}" width="${bw}" height="${bh}" style="fill:var(--sheet)"/>`);
-  ln(bx,by+34,bx+bw,by+34,"frame"); ln(bx+150,by+34,bx+150,by+bh,"frame"); ln(bx,by+57,bx+bw,by+57,"frame");
-  txt(bx+8,by+12,"PART","tbl","start"); txt(bx+8,by+29,p.name,"tbb","start");
-  txt(bx+bw-8,by+12,`NO. ${String(n).padStart(3,"0")}`,"tbl","end");
-  txt(bx+8,by+44,"MATERIAL","tbl","start"); txt(bx+8,by+54,p.mat.name,"tbt","start");
-  txt(bx+158,by+44,"DENSITY","tbl","start"); txt(bx+158,by+54,`${p.mat.rho.toFixed(2)} g/cm³`,"tbt","start");
-  txt(bx+8,by+67,"UNITS","tbl","start"); txt(bx+8,by+77,"MILLIMETERS","tbt","start");
-  txt(bx+158,by+67,"DATE","tbl","start"); txt(bx+158,by+77,fmtDate(dateOf(n)).toUpperCase(),"tbt","start");
+  S.push(`<rect class="frame" x="${bx}" y="${by}" width="${bw}" height="${bh}"/>`);
+  S.push(`<rect class="tbband" x="${bx}" y="${by}" width="${bw}" height="34"/>`);
+  ln(bx+150,by+34,bx+150,by+bh,"frame");ln(bx,by+57,bx+bw,by+57,"frame");
+  txt(bx+8,by+26,p.name,"tbb","start");txt(bx+bw-8,by+13,`NO. ${String(n).padStart(3,"0")}`,"tbn","end");
+  txt(bx+8,by+44,"MATERIAL","tbl","start");txt(bx+8,by+54,p.mat.name,"tbt","start");
+  txt(bx+158,by+44,"DENSITY","tbl","start");txt(bx+158,by+54,`${p.mat.rho.toFixed(2)} g/cm³`,"tbt","start");
+  txt(bx+8,by+67,"UNITS","tbl","start");txt(bx+8,by+77,"MILLIMETERS","tbt","start");
+  txt(bx+158,by+67,"DATE","tbl","start");txt(bx+158,by+77,fmtDate(dateOf(n)).toUpperCase(),"tbt","start");
   txt(24,484,"THIRD-ANGLE PROJECTION · DIMENSIONS IN MM · HIDDEN LINES DASHED","vt","start");
   return S.join("");
 }
 
-// ---------- game state ----------
+// ---------- helpers ----------
 const $=id=>document.getElementById(id);
-let cur=todayNum(), part, st, timerId;
-let software=store.get("massle-sw","Onshape");
-
 function band(rel){return rel<=TOL?"good":rel<=0.05?"warn":rel<=0.15?"near":"bad"}
-const SQ={good:"🟩",warn:"🟨",near:"🟧",bad:"⬛"};
+const SQ={good:"🟩",warn:"🟨",near:"🟧",bad:"🟥"};
+const KEYCAP=["0️⃣","1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣"];
 function mmss(ms){const t=Math.max(0,Math.floor(ms/1000));const h=Math.floor(t/3600),m=Math.floor(t/60)%60,s=t%60;return(h?h+":"+String(m).padStart(2,"0"):String(m).padStart(2,"0"))+":"+String(s).padStart(2,"0")}
+const keycaps=str=>[...str].map(c=>/\d/.test(c)?KEYCAP[+c]:c).join("");
+function speedTier(sec){return sec<300?"🚀":sec<600?"⚡":sec<1200?"🔧":sec<2400?"🐢":"🦥"}
+const ordinal=n=>n+(["th","st","nd","rd"][(n%100-20)%10]||["th","st","nd","rd"][n%100]||"th");
+
+// ---------- state ----------
+let cur=todayNum(),part,st,timerId,nextId;
+let software=store.get("caddle-sw","Onshape");
+$("pname").value=store.get("caddle-name","");
 
 function load(n){
-  cur=n; part=makePart(n);
-  st=store.get("massle-"+n,{start:null,end:null,guesses:[],done:false,won:false});
+  cur=n;part=makePart(n);
+  st=store.get("caddle-"+n,{start:null,end:null,guesses:[],done:false,won:false,gaveUp:false,ranked:false,official:null,rank:null,total:null,sw:null});
+  document.documentElement.style.setProperty("--hue",KIND[part.kind].hue);
   $("dwg").innerHTML=draw(part,n);
+  $("kindPill").textContent=`${KIND[part.kind].emoji} ${part.name}`;
   $("dayLbl").textContent=`#${n} · ${fmtDate(dateOf(n))}`;
-  $("prev").disabled=n<=1; $("next").disabled=n>=todayNum();
-  render();
+  $("prev").disabled=n<=1;$("next").disabled=n>=todayNum();
+  $("confirm").hidden=true;
+  render();loadBoard();
 }
-function save(){store.set("massle-"+cur,st)}
+function save(){store.set("caddle-"+cur,st)}
+const isToday=()=>cur===todayNum();
+const elapsed=()=>st.official!=null?st.official*1000:((st.end||Date.now())-st.start);
 
 function render(){
-  const started=!!st.start;
-  $("veil").hidden=started; $("dwg").classList.toggle("veiled",!started);
-  const live=started&&!st.done;
-  $("guess").disabled=!live; $("submit").disabled=!live;
+  const started=!!st.start,live=started&&!st.done;
+  $("veil").hidden=started;$("dwg").classList.toggle("veiled",!started);
+  $("veilTitle").textContent=isToday()?"Drawing hidden":"Past puzzle";
+  $("veilText").textContent=isToday()
+    ?(ONLINE?"The clock starts when you reveal it, and you only get one ranked run per day. Open your CAD program first.":"The clock starts when you reveal it. Open your CAD program first.")
+    :"This is an older part. You can play it for practice, but it won't be ranked.";
+  $("reveal").textContent=isToday()?"Start timer and reveal":"Reveal for practice";
+  // mode pill
+  const mp=$("modePill");
+  if(st.done){mp.hidden=false;mp.textContent=st.won?"✓ Solved · admire mode":st.gaveUp?"Gave up · admire mode":"Out of tries · admire mode"}
+  else if(started&&!st.ranked){mp.hidden=false;mp.textContent="Practice · not ranked"}
+  else if(started){mp.hidden=false;mp.textContent="Ranked run"}
+  else mp.hidden=true;
+  // inputs
+  $("guess").disabled=!live;$("submit").disabled=!live;
+  $("giveup").hidden=!live;
+  $("pname").disabled=started;
   if(!started)$("msg").textContent="Reveal the drawing to start.";
-  else if(live&&!st.guesses.length)$("msg").textContent="Enter the mass from your CAD program.";
+  else if(st.done)$("msg").textContent="This part is finished. Come back tomorrow for a new one.";
+  else if(!st.guesses.length)$("msg").textContent="Enter the mass from your CAD program.";
   // tries
-  const ol=$("tries"); ol.innerHTML="";
+  const ol=$("tries");ol.innerHTML="";
   for(let i=0;i<MAX;i++){
-    const g=st.guesses[i], li=document.createElement("li");
+    const g=st.guesses[i],li=document.createElement("li");
     if(g===undefined){li.className="empty";li.innerHTML=`<span>${i+1}</span><span>—</span><span></span>`}
-    else{const rel=Math.abs(g-part.mass)/part.mass,b=band(rel);li.className=b;
+    else{const b=band(Math.abs(g-part.mass)/part.mass);li.className=b;
       const dir=b==="good"?"✓ in band":g>part.mass?"too high ↓":"too low ↑";
       li.innerHTML=`<span>${i+1}</span><span>${g.toFixed(2)} g</span><span class="d">${dir}</span>`}
     ol.appendChild(li);
   }
   // clock
   clearInterval(timerId);
-  const tick=()=>{$("clock").textContent=st.start?mmss((st.end||Date.now())-st.start):"--:--"};
-  tick(); if(live)timerId=setInterval(tick,250);
+  const tick=()=>{$("clock").textContent=st.start?mmss(elapsed()):"--:--"};
+  tick();if(live)timerId=setInterval(tick,250);
+  $("rankStatus").textContent=st.done&&st.rank?`${ordinal(st.rank)} of ${st.total}`:(started&&st.ranked&&!st.done?"ranked run":"");
   // result
   $("result").hidden=!st.done;
   if(st.done){
-    const time=mmss(st.end-st.start);
-    $("resTitle").textContent=st.won?`Solved in ${time}`:"Out of tries";
-    $("resBody").textContent=`True mass: ${part.mass.toFixed(2)} g (pass band ${(part.mass*(1-TOL)).toFixed(2)}–${(part.mass*(1+TOL)).toFixed(2)} g).`;
+    const time=mmss(elapsed());
+    $("resTitle").textContent=st.won?`Solved in ${time}`:st.gaveUp?"You gave up":"Out of tries";
+    let body=`True mass: ${part.mass.toFixed(2)} g (pass band ${(part.mass*(1-TOL)).toFixed(2)}–${(part.mass*(1+TOL)).toFixed(2)} g).`;
+    if(st.won&&st.ranked&&st.rank)body+=` You placed ${ordinal(st.rank)} of ${st.total}.`;
+    else if(st.won&&!st.ranked)body+=" This run was practice, so it isn't on the leaderboard.";
+    $("resBody").textContent=body;
     $("shareText").textContent=shareText();
-    const all=stats(); $("stPlayed").textContent=all.played; $("stWon").textContent=all.won; $("stBest").textContent=all.best?mmss(all.best):"–";
-  }
-  // software + help
-  document.querySelectorAll("#sw button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.sw===software));
+    const all=stats();$("stPlayed").textContent=all.played;$("stWon").textContent=all.won;$("stBest").textContent=all.best?mmss(all.best):"–";
+    startNextCountdown();
+  }else{clearInterval(nextId)}
+  document.querySelectorAll("#sw button").forEach(b=>{b.setAttribute("aria-pressed",b.dataset.sw===software);b.disabled=st.done});
   $("helpTitle").textContent=software==="Other"?"Getting mass in other programs":`Getting mass in ${software}`;
   $("helpSteps").innerHTML=HELP[software].map(s=>`<li>${s}</li>`).join("");
 }
 
+function startNextCountdown(){
+  clearInterval(nextId);
+  const f=()=>{const t=new Date(),m=new Date(t.getFullYear(),t.getMonth(),t.getDate()+1);const ms=m-t;const h=Math.floor(ms/3600000),mi=Math.floor(ms/60000)%60,s=Math.floor(ms/1000)%60;$("nextIn").textContent=`Next part in ${h}h ${String(mi).padStart(2,"0")}m ${String(s).padStart(2,"0")}s`};
+  f();nextId=setInterval(f,1000);
+}
+
 function shareText(){
-  const sq=st.guesses.map(g=>SQ[band(Math.abs(g-part.mass)/part.mass)]).join("");
-  const time=mmss(st.end-st.start);
-  return `Caddle #${cur} · ${st.sw||software}\n${st.won?"⏱ "+time+"  "+st.guesses.length+"/"+MAX:"✖ X/"+MAX}\n${sq}`;
+  const squares=st.guesses.map(g=>SQ[band(Math.abs(g-part.mass)/part.mass)]).join("")+"⬜".repeat(MAX-st.guesses.length);
+  const sec=Math.floor(elapsed()/1000),time=keycaps(mmss(elapsed()));
+  const lines=[`Caddle #${cur} ${KIND[part.kind].emoji}`];
+  if(st.won)lines.push(`⏱️ ${time} ${speedTier(sec)}`);
+  else if(st.gaveUp)lines.push(`🏳️ ${time}`);
+  else lines.push(`❌ ${time}`);
+  lines.push(`${squares} ${st.won?st.guesses.length:"X"}/${MAX}`);
+  if(st.won&&st.ranked&&st.rank)lines.push(`${st.rank===1?"🥇":st.rank===2?"🥈":st.rank===3?"🥉":"🏁"} ${ordinal(st.rank)} of ${st.total}`);
+  else if(!st.ranked)lines.push("🧪 practice");
+  lines.push(`🛠️ ${st.sw||software}`);
+  lines.push(SITE);
+  return lines.join("\n");
 }
 function stats(){
   let played=0,won=0,best=0;
-  for(let i=1;i<=todayNum();i++){const s=store.get("massle-"+i,null);if(s&&s.done){played++;if(s.won){won++;const t=s.end-s.start;if(!best||t<best)best=t}}}
+  for(let i=1;i<=todayNum();i++){const s=store.get("caddle-"+i,null);if(s&&s.done){played++;if(s.won){won++;const t=s.official!=null?s.official*1000:s.end-s.start;if(!best||t<best)best=t}}}
   return{played,won,best};
 }
 
-// ---------- events ----------
-$("reveal").onclick=()=>{st.start=Date.now();st.sw=software;save();render();$("guess").focus()};
+// ---------- leaderboard ----------
+async function loadBoard(){
+  const ol=$("board"),empty=$("boardEmpty");
+  $("boardTitle").textContent=`Leaderboard · #${cur}`;
+  ol.innerHTML="";
+  if(!ONLINE){empty.textContent="The leaderboard isn't connected yet.";$("refreshBoard").hidden=true;return}
+  $("refreshBoard").hidden=false;empty.textContent="Loading…";
+  const n=cur;
+  try{
+    const rows=await rpc("get_board",{p_puzzle:n,p_player:player});
+    if(n!==cur)return;
+    ol.innerHTML="";
+    if(!rows.length){empty.textContent=isToday()?"No solves yet today. Be the first.":"Nobody solved this one.";return}
+    empty.textContent=`${rows[0].total} solved`;
+    let prev=0;
+    rows.forEach(r=>{
+      if(prev&&r.rank>prev+1){const g=document.createElement("li");g.className="gap";g.textContent="⋯";ol.appendChild(g)}
+      prev=r.rank;
+      const li=document.createElement("li");
+      li.className=(r.is_me?"me ":"")+(r.rank<=3?"r"+r.rank:"");
+      const rk=document.createElement("span");rk.className="rk";rk.textContent=r.rank;
+      const nm=document.createElement("span");nm.className="nm";nm.textContent=r.name+(r.is_me?" (you)":"");
+      const sw=document.createElement("span");sw.className="sw";sw.textContent=`${r.software||""} · ${r.tries}/${MAX}`;
+      const tm=document.createElement("span");tm.className="tm";tm.textContent=mmss(r.seconds*1000);
+      li.append(rk,nm,sw,tm);ol.appendChild(li);
+      if(r.is_me&&st.done&&st.won&&st.ranked&&(st.rank!==r.rank||st.total!==r.total)){st.rank=r.rank;st.total=r.total;save();render()}
+    });
+  }catch(e){empty.textContent="Couldn't reach the leaderboard. Try Refresh in a moment."}
+}
+
+// ---------- actions ----------
+async function finish(won,gaveUp){
+  st.done=true;st.won=won;st.gaveUp=gaveUp;st.end=Date.now();st.sw=software;save();render();
+  if(st.ranked){
+    try{
+      const secs=await rpc("finish_attempt",{p_puzzle:cur,p_player:player,p_tries:Math.max(1,st.guesses.length),p_solved:won,p_gave_up:gaveUp,p_software:software});
+      if(typeof secs==="number"){st.official=secs;save()}
+    }catch(e){}
+    render();await loadBoard();
+  }
+}
+$("reveal").onclick=async()=>{
+  const name=$("pname").value.trim().slice(0,20);store.set("caddle-name",name);
+  st.start=Date.now();st.sw=software;st.ranked=false;save();render();$("guess").focus();
+  if(ONLINE&&isToday()){
+    $("rankStatus").textContent="connecting…";
+    try{
+      const ts=await rpc("start_attempt",{p_puzzle:cur,p_player:player,p_name:name||"Anonymous",p_software:software});
+      const t=Date.parse(ts);
+      if(isFinite(t)){st.ranked=true;if(t<st.start-3000)st.start=t;save()}
+    }catch(e){$("msg").textContent="Couldn't reach the leaderboard, so this run is practice only."}
+    render();
+  }
+};
 $("form").addEventListener("submit",e=>{
-  e.preventDefault(); if(st.done||!st.start)return;
+  e.preventDefault();if(st.done||!st.start)return;
   const v=parseFloat($("guess").value.replace(",","."));
   if(!isFinite(v)||v<=0){$("msg").textContent="Enter a positive number in grams, like 108.4.";return}
-  st.guesses.push(v); st.sw=software;
+  st.guesses.push(v);$("guess").value="";
   const ok=Math.abs(v-part.mass)/part.mass<=TOL;
-  if(ok||st.guesses.length>=MAX){st.done=true;st.won=ok;st.end=Date.now()}
-  else $("msg").textContent=v>part.mass?"Too high. Check your density and units.":"Too low. Check for missing features or units.";
-  $("guess").value=""; save(); render();
+  if(ok||st.guesses.length>=MAX){finish(ok,false);return}
+  save();render();
+  $("msg").textContent=v>part.mass?"Too high. Check the density and units.":"Too low. Check for a missing feature or wrong units.";
 });
-document.querySelectorAll("#sw button").forEach(b=>b.onclick=()=>{software=b.dataset.sw;store.set("massle-sw",software);if(st.start&&!st.done){st.sw=software;save()}render()});
+$("giveup").onclick=()=>{$("confirm").hidden=false;$("giveup").hidden=true};
+$("giveNo").onclick=()=>{$("confirm").hidden=true;$("giveup").hidden=false};
+$("giveYes").onclick=()=>{$("confirm").hidden=true;finish(false,true)};
+document.querySelectorAll("#sw button").forEach(b=>b.onclick=()=>{software=b.dataset.sw;store.set("caddle-sw",software);if(st.start&&!st.done){st.sw=software;save()}render()});
+$("pname").addEventListener("change",()=>store.set("caddle-name",$("pname").value.trim().slice(0,20)));
 $("prev").onclick=()=>cur>1&&load(cur-1);
 $("next").onclick=()=>cur<todayNum()&&load(cur+1);
+$("refreshBoard").onclick=loadBoard;
 $("copy").onclick=()=>{
   const t=shareText();
-  const done=()=>{$("copy").textContent="Copied";setTimeout(()=>$("copy").textContent="Copy result",1500)};
-  const fallback=()=>{const r=document.createRange();r.selectNodeContents($("shareText"));const s=getSelection();s.removeAllRanges();s.addRange(r);$("copy").textContent="Selected, press Ctrl+C"};
-  try{navigator.clipboard.writeText(t).then(done,fallback)}catch(e){fallback()}
+  const ok=()=>{$("copy").textContent="Copied";setTimeout(()=>$("copy").textContent="Copy result",1500)};
+  const fb=()=>{const r=document.createRange();r.selectNodeContents($("shareText"));const s=getSelection();s.removeAllRanges();s.addRange(r);$("copy").textContent="Selected, press Ctrl+C"};
+  try{navigator.clipboard.writeText(t).then(ok,fb)}catch(e){fb()}
 };
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&cur!==todayNum()&&cur===todayNum()-1&&st.done)load(todayNum())});
 
-window.__massle={makePart};
+window.__caddle={makePart,keycaps,mmss};
 load(cur);
 })();
 </script>
-
 </body>
 </html>
