@@ -509,8 +509,8 @@ const ln=(x1,y1,x2,y2,c="ln")=>S.push(`<line class="${c}" x1="${x1}" y1="${y1}" 
 const rect=(x,y,w,h,c="fillp")=>S.push(`<rect class="${c}" x="${x}" y="${y}" width="${w}" height="${h}"/>`);
 const circ=(x,y,r,c="hole")=>S.push(`<circle class="${c}" cx="${x}" cy="${y}" r="${r}"/>`);
 const txt=(x,y,t,c="dt",a="middle",rot)=>S.push(`<text class="${c}" x="${x}" y="${y}" text-anchor="${a}"${rot?` transform="rotate(${rot} ${x} ${y})"`:""}>${t}</text>`);
-function dimH(xa,xb,yRef,yDim,t){const s=Math.sign(yDim-yRef)||-1;ln(xa,yRef+3*s,xa,yDim+5*s,"dm");ln(xb,yRef+3*s,xb,yDim+5*s,"dm");S.push(`<line class="dm" x1="${xa}" y1="${yDim}" x2="${xb}" y2="${yDim}" marker-start="url(#ar)" marker-end="url(#ar)"/>`);txt((xa+xb)/2,yDim-4,t)}
-function dimV(ya,yb,xRefA,xDim,t,xRefB){if(xRefB===undefined)xRefB=xRefA;const s=Math.sign(xDim-xRefA)||-1;ln(xRefA+3*s,ya,xDim+5*s,ya,"dm");ln(xRefB+3*s,yb,xDim+5*s,yb,"dm");S.push(`<line class="dm" x1="${xDim}" y1="${ya}" x2="${xDim}" y2="${yb}" marker-start="url(#ar)" marker-end="url(#ar)"/>`);txt(xDim-4,(ya+yb)/2,t,"dt","middle",-90)}
+function dimH(xa,xb,yRef,yDim,t){const s=Math.sign(yDim-yRef)||-1;ln(xa,yRef+3*s,xa,yDim+5*s,"dm");ln(xb,yRef+3*s,xb,yDim+5*s,"dm");S.push(`<line class="dm" x1="${xa}" y1="${yDim}" x2="${xb}" y2="${yDim}" marker-start="url(#ar)" marker-end="url(#ar)"/>`);if(Math.abs(xb-xa)<16)txt(Math.max(xa,xb)+6,yDim+4,t,"dt","start");else txt((xa+xb)/2,yDim-4,t)}
+function dimV(ya,yb,xRefA,xDim,t,xRefB){if(xRefB===undefined)xRefB=xRefA;const s=Math.sign(xDim-xRefA)||-1;ln(xRefA+3*s,ya,xDim+5*s,ya,"dm");ln(xRefB+3*s,yb,xDim+5*s,yb,"dm");S.push(`<line class="dm" x1="${xDim}" y1="${ya}" x2="${xDim}" y2="${yb}" marker-start="url(#ar)" marker-end="url(#ar)"/>`);if(Math.abs(yb-ya)<16)txt(xDim+5,(ya+yb)/2+4,t,"dt","start");else txt(xDim-4,(ya+yb)/2,t,"dt","middle",-90)}
 function leader(x1,y1,x2,y2,t){S.push(`<polyline class="dm" points="${x1},${y1} ${x2},${y2} ${x2+14},${y2}" marker-start="url(#ar)"/>`);txt(x2+18,y2+4,t,"dt","start")}
 function cross(x,y,r){ln(x-r-5,y,x+r+5,y,"ctr");ln(x,y-r-5,x,y+r+5,"ctr")}
 function draw(p,n){
@@ -610,7 +610,7 @@ function draw(p,n){
   S.push(`<rect class="frame" x="${bx}" y="${by}" width="${bw}" height="${bh}"/>`);
   S.push(`<rect class="tbband" x="${bx}" y="${by}" width="${bw}" height="34"/>`);
   ln(bx+150,by+34,bx+150,by+bh,"frame");ln(bx,by+57,bx+bw,by+57,"frame");
-  txt(bx+8,by+26,p.name,"tbb","start");txt(bx+bw-8,by+13,`${p.diff==="hard"?"HARD":"EASY"} · NO. ${String(n).padStart(3,"0")}`,"tbn","end");
+  txt(bx+8,by+29,p.name,"tbb","start");txt(bx+bw-8,by+11,`${p.diff==="hard"?"HARD":"EASY"} · NO. ${String(n).padStart(3,"0")}`,"tbn","end");
   txt(bx+8,by+44,"MATERIAL","tbl","start");txt(bx+8,by+54,p.mat.name,"tbt","start");
   txt(bx+158,by+44,"DENSITY","tbl","start");txt(bx+158,by+54,`${p.mat.rho.toFixed(2)} g/cm³`,"tbt","start");
   txt(bx+8,by+67,"UNITS","tbl","start");txt(bx+8,by+77,"MILLIMETERS","tbt","start");
