@@ -18,6 +18,7 @@
   --accent:#2563eb; --accent-ink:#ffffff; --soft:#e4ecf7;
   --good:#16a34a; --warn:#eab308; --near:#f97316; --bad:#e11d48;
   --plate:#f97316; --bush:#0ea5a4; --brak:#db2777; --hue:var(--plate);
+  --box:#ca8a04; --hub:#7c3aed; --hop:#0284c7; --encl:#059669; --hard:#1f2937;
   --gold:#f5b301; --silver:#9aa7b4; --bronze:#c77b3a;
   --f-display:"Saira Condensed","Arial Narrow",sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -29,6 +30,7 @@
   --accent:#6aa0ff; --accent-ink:#0b1322; --soft:#1b2a3f;
   --good:#34d399; --warn:#facc15; --near:#fb923c; --bad:#fb7185;
   --plate:#fb923c; --bush:#2dd4bf; --brak:#f472b6;
+  --box:#facc15; --hub:#a78bfa; --hop:#38bdf8; --encl:#34d399; --hard:#e5e7eb;
   --gold:#facc15; --silver:#b8c4d0; --bronze:#e0985a; color-scheme:dark}}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -45,6 +47,38 @@ header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-be
 .logo span:nth-child(5){background:var(--bush)}
 .logo span:nth-child(6){background:var(--brak)}
 .tag{margin:8px 0 0;color:var(--muted);max-width:56ch}
+.tabs{display:flex;gap:4px;padding:4px;border-radius:12px;background:var(--sheet);border:1px solid var(--rule)}
+.tabs button{border:none;background:transparent;padding:9px 16px;border-radius:9px;font-family:var(--f-display);font-weight:700;font-size:1.1rem;letter-spacing:.02em;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--sheet)}
+.tabs button:hover:not([aria-selected="true"]){color:var(--ink)}
+.bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.bar .grow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.diff{display:inline-flex;gap:4px;padding:3px;border-radius:10px;background:var(--sheet);border:1px solid var(--rule)}
+.diff button{border:none;padding:6px 14px;border-radius:7px;font-weight:600;background:transparent;color:var(--muted)}
+.diff button[aria-pressed="true"][data-d="easy"],.diff button[aria-pressed="true"][data-d="any"]{background:var(--good);color:#fff}
+.diff button[aria-pressed="true"][data-d="hard"]{background:var(--hard);color:var(--sheet)}
+.unl-lbl{font-family:var(--f-mono);font-size:.9rem}
+.skillcard .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.badge{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.08em;padding:3px 10px;border-radius:999px;font-weight:500}
+.badge.easy{background:var(--good);color:#fff}.badge.hard{background:var(--hard);color:var(--sheet)}
+.chips.left{justify-content:flex-start}
+.chips button{font:inherit;font-size:.82rem;padding:4px 12px;border-radius:999px;background:color-mix(in srgb,var(--hue) 14%,var(--sheet));border:1px solid color-mix(in srgb,var(--hue) 40%,var(--rule));color:var(--ink)}
+.learn{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:18px;align-items:start}
+@media (max-width:920px){.learn{grid-template-columns:minmax(0,1fr)}}
+.learn h2{margin:0;font-family:var(--f-display);font-size:1.7rem;line-height:1.1}
+.learn p{margin:0}
+.learn input[type=search]{font:inherit;padding:10px 12px;border:1px solid var(--rule);border-radius:8px;background:var(--bg);color:var(--ink);width:100%}
+.skillgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.skillbtn{display:grid;gap:2px;text-align:left;padding:10px 12px}
+.skillbtn b{font-family:var(--f-display);font-size:1.1rem}
+.skillbtn span{font-size:.78rem;color:var(--muted)}
+.skillbtn[aria-pressed="true"]{border-color:var(--accent);background:var(--soft)}
+.plist{margin:0;padding:0;list-style:none;display:grid;gap:6px;max-height:560px;overflow:auto}
+.plist button{width:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;text-align:left}
+.plist .pn{font-family:var(--f-mono);font-size:.85rem}
+.plist .pt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plist .ps{font-size:.78rem;color:var(--muted)}
+.plist .ps.done{color:var(--good);font-weight:600}
 .nav{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:.9rem}
 .nav button{width:36px;height:36px;padding:0}
 .nav .lbl{min-width:160px;text-align:center}
@@ -177,16 +211,61 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
   <header>
     <div>
       <h1 class="logo" aria-label="Caddle"><span>C</span><span>A</span><span>D</span><span>D</span><span>L</span><span>E</span></h1>
-      <p class="tag">One part a day. Model it in any CAD program, enter the mass in grams, and race the leaderboard.</p>
+      <p class="tag">An Easy and a Hard part every day. Model it in any CAD program, enter the mass in grams, and race the leaderboard.</p>
     </div>
-    <div class="nav">
-      <button id="prev" aria-label="Previous puzzle">‹</button>
-      <div class="lbl" id="dayLbl">#1</div>
-      <button id="next" aria-label="Next puzzle">›</button>
+    <div class="tabs" role="tablist" aria-label="Game modes">
+      <button role="tab" id="tab-daily" data-view="daily" aria-selected="true">Play daily</button>
+      <button role="tab" id="tab-unlimited" data-view="unlimited" aria-selected="false">Unlimited</button>
+      <button role="tab" id="tab-learn" data-view="learn" aria-selected="false">Learn</button>
     </div>
   </header>
 
-  <div class="grid">
+  <div class="bar" id="dailyBar">
+    <div class="grow">
+      <div class="diff" id="diffSeg" role="group" aria-label="Difficulty">
+        <button data-d="easy" aria-pressed="true">Easy</button>
+        <button data-d="hard" aria-pressed="false">Hard</button>
+      </div>
+      <span class="msg" id="diffHint">Easy: sketches, extrudes, shells. Hard: lofts, patterns, fillets.</span>
+    </div>
+    <div class="nav">
+      <button id="prev" aria-label="Previous day">‹</button>
+      <div class="lbl" id="dayLbl">#1</div>
+      <button id="next" aria-label="Next day">›</button>
+    </div>
+  </div>
+
+  <div class="bar" id="unlBar" hidden>
+    <div class="grow">
+      <div class="diff" id="unlSeg" role="group" aria-label="Difficulty filter">
+        <button data-d="any" aria-pressed="true">Any</button>
+        <button data-d="easy" aria-pressed="false">Easy</button>
+        <button data-d="hard" aria-pressed="false">Hard</button>
+      </div>
+      <span class="unl-lbl" id="unlLbl"></span>
+    </div>
+    <div class="grow">
+      <span class="msg" id="unlLeft"></span>
+      <button class="primary" id="newPuzzle">New puzzle</button>
+    </div>
+  </div>
+
+  <section class="learn" id="learnView" hidden>
+    <div class="card">
+      <h2>Learn by CAD tool</h2>
+      <p class="msg">Pick a tool to see what it does, then practice every Caddle part that uses it.</p>
+      <input type="search" id="skillSearch" placeholder="Search tools, like loft or shell" aria-label="Search CAD tools">
+      <div class="skillgrid" id="skillGrid"></div>
+    </div>
+    <div class="card" id="skillDetail">
+      <div class="eyebrow">CAD tool</div>
+      <h2 id="skName">Pick a tool</h2>
+      <p id="skDesc" class="msg">Choose a tool on the left to see the puzzles that use it.</p>
+      <ol class="plist" id="skList"></ol>
+    </div>
+  </section>
+
+  <div class="grid" id="gameView">
     <div class="panel">
       <div class="sheet">
         <svg id="dwg" viewBox="0 0 760 500" role="img" aria-label="Engineering drawing of the part"></svg>
@@ -200,12 +279,18 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
         </div>
       </div>
 
+      <div class="card skillcard">
+        <div class="top"><div class="eyebrow">Skills covered</div><span class="badge easy" id="diffBadge">EASY</span></div>
+        <div class="chips left" id="skillChips"></div>
+        <div class="msg" id="skillTip">Tap a skill to learn it and find more puzzles that use it.</div>
+      </div>
+
       <div class="card">
         <div class="rules">
-          <div style="--c:var(--good)"><b>Same part for everyone</b>A new drawing unlocks at midnight your time. Every dimension is in millimeters.</div>
+          <div style="--c:var(--good)"><b>Same parts for everyone</b>A new Easy and Hard drawing unlock at midnight your time. Every dimension is in millimeters.</div>
           <div style="--c:var(--warn)"><b>Use the listed density</b>Set a custom material with the density in the title block. Library materials can be slightly off.</div>
           <div style="--c:var(--near)"><b>Five tries, ±1%</b>Anything within 1% of the true mass counts. Misses tell you whether you're high or low.</div>
-          <div style="--c:var(--bad)"><b>One ranked run</b>The server times you from reveal to solve. Refreshing doesn't reset anything; a finished part is yours to admire until tomorrow.</div>
+          <div style="--c:var(--bad)"><b>One ranked run each</b>You get one ranked run per difficulty per day, timed by the server. Unlimited and past days are practice.</div>
         </div>
       </div>
     </div>
@@ -290,7 +375,7 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
       <div><b id="stWon">0</b><span>solved</span></div>
       <div><b id="stBest">–</b><span>best time</span></div>
     </div>
-    <div class="tomorrow"><b>Come back tomorrow!</b><span class="next" id="nextIn"></span></div>
+    <div class="tomorrow"><b id="mTomorrow">Come back tomorrow!</b><span class="next" id="nextIn"></span><button class="primary wide" id="mNext" hidden>New puzzle</button></div>
   </div>
 </div>
 
@@ -311,7 +396,33 @@ const MATERIALS = [
 const KIND = {
   plate:{label:"MOUNTING PLATE", emoji:"🔩", hue:"var(--plate)"},
   bushing:{label:"FLANGED BUSHING", emoji:"⚙️", hue:"var(--bush)"},
-  bracket:{label:"ANGLE BRACKET", emoji:"📐", hue:"var(--brak)"}
+  bracket:{label:"ANGLE BRACKET", emoji:"📐", hue:"var(--brak)"},
+  box:{label:"OPEN BOX", emoji:"📦", hue:"var(--box)"},
+  hub:{label:"BOLTED HUB", emoji:"🛞", hue:"var(--hub)"},
+  hopper:{label:"LOFTED HOPPER", emoji:"🔻", hue:"var(--hop)"},
+  enclosure:{label:"ROUNDED ENCLOSURE", emoji:"🗃️", hue:"var(--encl)"}
+};
+const SKILLS={
+  plate:["Extrude","Through holes","Rectangular pattern","Symmetric placement"],
+  bushing:["Revolve","Concentric bore"],
+  bracket:["Extrude","Through holes","Chained dimensions"],
+  box:["Extrude","Shell"],
+  hub:["Revolve","Circular pattern","Concentric bore","Through holes"],
+  hopper:["Loft","Extrude","Through holes"],
+  enclosure:["Extrude","Fillet","Shell"]
+};
+const SKILL_INFO={
+  "Extrude":"Pull a 2D sketch straight out into a solid. It's the starting point for almost every part.",
+  "Revolve":"Spin a half-profile sketch around an axis to make round parts like bushings and hubs.",
+  "Loft":"Blend a solid between sketches on different planes, like a big square tapering up to a small one.",
+  "Shell":"Hollow out a solid and remove a face, leaving walls of one thickness. Great for boxes and enclosures.",
+  "Fillet":"Round off sharp edges with a set radius. Watch how a fillet changes the inside corners after a shell.",
+  "Circular pattern":"Copy a feature evenly around an axis, like bolt holes spaced around a bolt circle.",
+  "Rectangular pattern":"Copy a feature in rows and columns, like a mounting hole in each corner.",
+  "Through holes":"Cut a hole all the way through the part with the hole tool or an extruded cut.",
+  "Concentric bore":"A hole that shares its center with a round feature. Use a concentric constraint to line it up.",
+  "Symmetric placement":"Place features evenly about the part's center with symmetric or midpoint constraints.",
+  "Chained dimensions":"Locate features with dimensions measured one after another from an edge."
 };
 const HELP = {
   Onshape:["Right-click the part in the parts list and choose Assign material.","Pick Custom and enter the density from the title block (g/cm³).","Open Mass properties from the right-side panel and read the mass."],
@@ -347,26 +458,48 @@ function fmtDate(d){return d.toLocaleDateString(undefined,{month:"short",day:"nu
 function rng(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function mk(r){return{int:(a,b,s=1)=>{const n=Math.floor((b-a)/s)+1;return a+Math.floor(r()*n)*s},pick:arr=>arr[Math.floor(r()*arr.length)]}}
 const fmt=n=>Number.isInteger(n)?String(n):n.toFixed(1);
-function makePart(n){
-  const R=mk(rng(n*9973+17));
+const HARD=10000; // hard puzzles are stored as day number + 10000
+function kindFor(n,diff){
+  if(diff==="hard")return["hub","hopper","enclosure"][(n-1)%3];
+  return n<=28?["plate","bushing","bracket"][(n-1)%3]:["plate","box","bracket","bushing"][(n-1)%4]; // Sept 1-28 stay exactly as they were
+}
+function makePart(n,diff="easy"){
+  const R=mk(rng(diff==="hard"?n*7919+101:n*9973+17));
   const mat=MATERIALS[(n*3+R.int(0,4))%MATERIALS.length];
-  const kind=["plate","bushing","bracket"][(n-1)%3];
+  const kind=kindFor(n,diff),PI=Math.PI;
   let p;
   if(kind==="plate"){
     const L=R.int(70,130,5),W=R.int(40,70,5),T=R.int(4,12);
     const d=R.pick([5.5,6,6.6,8,9]);const e=Math.max(R.int(8,12),Math.ceil(d/2+4));
     let D=R.pick([0,12,16,20,25]);if(D>W-2*e-4||D>L-2*e-4)D=0;
-    p={kind,L,W,T,d,e,D,V:T*(L*W-4*Math.PI*d*d/4-(D?Math.PI*D*D/4:0))};
+    p={kind,L,W,T,d,e,D,V:T*(L*W-4*PI*d*d/4-(D?PI*D*D/4:0))};
   }else if(kind==="bushing"){
     const D1=R.int(40,70,2),D2=R.int(20,D1-12,2),d=R.int(8,D2-8),H1=R.int(5,12),H2=R.int(15,40);
-    p={kind,D1,D2,d,H1,H2,V:Math.PI/4*(D1*D1*H1+D2*D2*H2-d*d*(H1+H2))};
-  }else{
+    p={kind,D1,D2,d,H1,H2,V:PI/4*(D1*D1*H1+D2*D2*H2-d*d*(H1+H2))};
+  }else if(kind==="bracket"){
     const L=R.int(60,100,5),W=R.int(25,50,5),H=R.int(35,80,5),T=R.int(3,8);
     const d=R.pick([4.5,5.5,6.6]);const p1=R.int(10,20);
     const maxSp=Math.floor((L-T-8-p1)/5)*5;const sp=R.int(15,Math.max(15,maxSp),5);
-    p={kind,L,W,H,T,d,p1,sp,V:T*W*L+T*W*(H-T)-2*Math.PI*d*d/4*T};
+    p={kind,L,W,H,T,d,p1,sp,V:T*W*L+T*W*(H-T)-2*PI*d*d/4*T};
+  }else if(kind==="box"){ // open-top box, uniform wall and floor
+    const L=R.int(50,120,5),W=R.int(40,90,5),H=R.int(20,50,5),t=R.int(2,5);
+    p={kind,L,W,H,t,V:L*W*H-(L-2*t)*(W-2*t)*(H-t)};
+  }else if(kind==="enclosure"){ // rounded vertical edges, then shelled open-top (inside corners become R-t)
+    const L=R.int(60,120,5),W=R.int(40,80,5),H=R.int(20,45,5),t=R.int(2,4);
+    const r=R.int(t+3,Math.min(15,Math.floor(W/4)));
+    const outer=L*W-(4-PI)*r*r,inner=(L-2*t)*(W-2*t)-(4-PI)*(r-t)**2;
+    p={kind,L,W,H,t,r,V:H*outer-(H-t)*inner};
+  }else if(kind==="hub"){ // flange + boss, center bore, bolt circle
+    const Df=R.int(60,100,2),tf=R.int(6,12),Dh=R.int(24,Df-30,2),hh=R.int(10,30),d=R.int(8,Dh-10);
+    const N=R.pick([3,4,5,6,8]),dh=R.pick([4.5,5.5,6.6]);
+    const P=R.int(Math.ceil((Dh+dh+6)/2)*2,Math.floor((Df-dh-6)/2)*2,2);
+    p={kind,Df,tf,Dh,hh,d,N,dh,P,V:PI/4*(Df*Df*tf+Dh*Dh*hh-d*d*(tf+hh)-N*dh*dh*tf)};
+  }else{ // hopper: square base plate + straight loft between two squares + through hole
+    const B=R.int(50,90,5),tb=R.int(5,10),s1=B-2*R.int(3,8);
+    const s2=R.int(Math.ceil(s1*0.35/2)*2,Math.floor(s1*0.7/2)*2,2),h=R.int(20,50,5),d=R.int(6,Math.max(6,s2-8));
+    p={kind,B,tb,s1,s2,h,d,V:B*B*tb+h/3*(s1*s1+s2*s2+s1*s2)-PI*d*d/4*(tb+h)};
   }
-  p.name=KIND[kind].label;p.mat=mat;p.mass=p.V/1000*mat.rho;
+  p.diff=diff;p.name=KIND[kind].label;p.mat=mat;p.mass=p.V/1000*mat.rho;
   return p;
 }
 
@@ -411,6 +544,52 @@ function draw(p,n){
     ln(cx-rb,y1,cx-rb,yb,"hid");ln(cx+rb,y1,cx+rb,yb,"hid");ln(cx,y1-10,cx,yb+10,"ctr");
     dimH(cx-r2,cx+r2,y1,y1-16,`Ø${fmt(p.D2)}`);dimH(cx-r1,cx+r1,yb,yb+22,`Ø${fmt(p.D1)}`);
     dimV(yf,yb,cx+r1,cx+r1+24,fmt(p.H1));dimV(y1,yb,cx+r2,cx+r1+52,fmt(H),cx+r1);
+  }else if(p.kind==="box"||p.kind==="enclosure"){
+    const r=p.r||0,s=Math.min(440/p.L,225/(p.W+p.H));
+    const w=p.L*s,h=p.W*s,x0=cx-w/2,y0=80,ts=p.t*s,y1=y0+h+60,hs=p.H*s,rs=r*s,ri=Math.max(0,r-p.t)*s;
+    txt(x0,y0-50,"TOP","vt","start");
+    S.push(`<rect class="fillp" x="${x0}" y="${y0}" width="${w}" height="${h}" rx="${rs}"/>`);
+    S.push(`<rect class="hole" x="${x0+ts}" y="${y0+ts}" width="${w-2*ts}" height="${h-2*ts}" rx="${ri}"/>`);
+    dimH(x0,x0+w,y0,y0-34,fmt(p.L));dimV(y0,y0+h,x0,x0-22,fmt(p.W));
+    dimH(x0+w-ts,x0+w,y0+h,y0+h+16,fmt(p.t));
+    if(r){const ccx=x0+w-rs,ccy=y0+rs;leader(ccx+rs*a,ccy-rs*a,x0+w+30,y0-8,`4× R${fmt(r)}`)}
+    txt(x0,y1-10,"FRONT","vt","start");rect(x0,y1,w,hs);
+    ln(x0+ts,y1,x0+ts,y1+hs-ts,"hid");ln(x0+w-ts,y1,x0+w-ts,y1+hs-ts,"hid");ln(x0+ts,y1+hs-ts,x0+w-ts,y1+hs-ts,"hid");
+    dimV(y1+hs-ts,y1+hs,x0+w,x0+w+22,fmt(p.t));dimV(y1,y1+hs,x0+w,x0+w+48,fmt(p.H));
+    txt(x0,y1+hs+30,r?`OPEN TOP · SHELL ${fmt(p.t)} · OUTSIDE VERTICAL EDGES R${fmt(r)}`:`OPEN TOP · WALL AND FLOOR ${fmt(p.t)} THICK`,"vt","start");
+  }else if(p.kind==="hub"){
+    const H=p.tf+p.hh,s=Math.min(280/p.Df,220/(p.Df+H));
+    const r1=p.Df/2*s,r2=p.Dh/2*s,rb=p.d/2*s,rp=p.P/2*s,rh=p.dh/2*s,cy=80+r1,y1=80+2*r1+60,yb=y1+H*s,yf=y1+p.hh*s;
+    txt(cx-r1,64,"TOP","vt","start");
+    circ(cx,cy,r1,"fillp");circ(cx,cy,rp,"ctr");circ(cx,cy,r2,"fillp");circ(cx,cy,rb);cross(cx,cy,r1);
+    const hp=[];for(let k=0;k<p.N;k++){const an=-Math.PI/2+k*2*Math.PI/p.N;hp.push([cx+rp*Math.cos(an),cy+rp*Math.sin(an)])}
+    hp.forEach(([x,y])=>circ(x,y,rh));
+    leader(cx+rb*a,cy-rb*a,cx+r1+40,cy-r1+6,`Ø${fmt(p.d)} THRU`);
+    const hk=hp.reduce((b,q)=>q[0]>b[0]+0.01?q:b);
+    leader(hk[0]+rh*a,hk[1]+rh*a,cx+r1+40,cy+r1*0.45,`${p.N}× Ø${fmt(p.dh)} THRU`);
+    txt(cx+r1+58,cy+r1*0.45+18,`EQ SP ON Ø${fmt(p.P)} BC`,"dt","start");
+    txt(cx-r1,y1-40,"FRONT","vt","start");
+    S.push(`<polygon class="fillp" points="${cx-r2},${y1} ${cx+r2},${y1} ${cx+r2},${yf} ${cx+r1},${yf} ${cx+r1},${yb} ${cx-r1},${yb} ${cx-r1},${yf} ${cx-r2},${yf}"/>`);
+    ln(cx-rb,y1,cx-rb,yb,"hid");ln(cx+rb,y1,cx+rb,yb,"hid");ln(cx,y1-10,cx,yb+10,"ctr");
+    [...new Set(hp.map(q=>Math.round((q[0]-cx)*10)/10))].forEach(dx=>{ln(cx+dx-rh,yf,cx+dx-rh,yb,"hid");ln(cx+dx+rh,yf,cx+dx+rh,yb,"hid")});
+    dimH(cx-r2,cx+r2,y1,y1-16,`Ø${fmt(p.Dh)}`);dimH(cx-r1,cx+r1,yb,yb+22,`Ø${fmt(p.Df)}`);
+    dimV(yf,yb,cx+r1,cx+r1+24,fmt(p.tf));dimV(y1,yb,cx+r2,cx+r1+52,fmt(H),cx+r1);
+  }else if(p.kind==="hopper"){
+    const H=p.tb+p.h,s=Math.min(260/p.B,215/(p.B+H));
+    const bs=p.B*s,a1=p.s1*s,a2=p.s2*s,rb=p.d/2*s,x0=cx-bs/2,y0=80,cy=y0+bs/2,y1=y0+bs+60,yp=y1+p.h*s,yb=yp+p.tb*s;
+    txt(x0,y0-50,"TOP","vt","start");
+    rect(x0,y0,bs,bs);rect(cx-a1/2,cy-a1/2,a1,a1);rect(cx-a2/2,cy-a2/2,a2,a2);
+    [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([sx,sy])=>ln(cx+sx*a1/2,cy+sy*a1/2,cx+sx*a2/2,cy+sy*a2/2));
+    circ(cx,cy,rb);cross(cx,cy,rb);
+    dimH(x0,x0+bs,y0,y0-34,`${fmt(p.B)} SQ`);dimH(cx-a1/2,cx+a1/2,cy-a1/2,y0-14,`${fmt(p.s1)} SQ`);
+    leader(cx+rb*a,cy-rb*a,x0+bs+30,y0+12,`Ø${fmt(p.d)} THRU ALL`);
+    txt(x0,y1-34,"FRONT","vt","start");
+    S.push(`<polygon class="fillp" points="${cx-a2/2},${y1} ${cx+a2/2},${y1} ${cx+a1/2},${yp} ${cx-a1/2},${yp}"/>`);
+    rect(x0,yp,bs,p.tb*s);
+    ln(cx-rb,y1,cx-rb,yb,"hid");ln(cx+rb,y1,cx+rb,yb,"hid");ln(cx,y1-8,cx,yb+8,"ctr");
+    dimH(cx-a2/2,cx+a2/2,y1,y1-14,`${fmt(p.s2)} SQ`);
+    dimV(y1,yp,cx+a2/2,x0+bs+24,fmt(p.h),x0+bs);dimV(yp,yb,x0,x0-20,fmt(p.tb));
+    txt(x0,yb+30,"STRAIGHT LOFT BETWEEN TWO CENTERED SQUARES","vt","start");
   }else{
     const s=Math.min(440/p.L,240/(p.W+p.H));
     const w=p.L*s,wd=p.W*s,x0=cx-w/2,y0=80,t=p.T*s,y1=y0+wd+60,yb=y1+p.H*s,hr=p.d/2*s;
@@ -431,7 +610,7 @@ function draw(p,n){
   S.push(`<rect class="frame" x="${bx}" y="${by}" width="${bw}" height="${bh}"/>`);
   S.push(`<rect class="tbband" x="${bx}" y="${by}" width="${bw}" height="34"/>`);
   ln(bx+150,by+34,bx+150,by+bh,"frame");ln(bx,by+57,bx+bw,by+57,"frame");
-  txt(bx+8,by+26,p.name,"tbb","start");txt(bx+bw-8,by+13,`NO. ${String(n).padStart(3,"0")}`,"tbn","end");
+  txt(bx+8,by+26,p.name,"tbb","start");txt(bx+bw-8,by+13,`${p.diff==="hard"?"HARD":"EASY"} · NO. ${String(n).padStart(3,"0")}`,"tbn","end");
   txt(bx+8,by+44,"MATERIAL","tbl","start");txt(bx+8,by+54,p.mat.name,"tbt","start");
   txt(bx+158,by+44,"DENSITY","tbl","start");txt(bx+158,by+54,`${p.mat.rho.toFixed(2)} g/cm³`,"tbt","start");
   txt(bx+8,by+67,"UNITS","tbl","start");txt(bx+8,by+77,"MILLIMETERS","tbt","start");
@@ -463,32 +642,40 @@ function nameProblem(n){
 }
 
 // ---------- state ----------
-let cur=todayNum(),part,st,timerId,nextId;
+let cur=todayNum(),diff=store.get("caddle-diff","easy")==="hard"?"hard":"easy",playMode="daily",view="daily",part,st,timerId,nextId;
+const pid=()=>cur+(diff==="hard"?HARD:0);
+const DIFF=d=>d==="hard"?"Hard":"Easy";
+const titleCase=t=>t.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
 let software=store.get("caddle-sw","Onshape");
 {const n=store.get("caddle-name","");const ok=n&&!nameProblem(n)?n:"";$("pname").value=ok;if(ok!==n)store.set("caddle-name",ok)}
 
-function load(n){
-  cur=n;part=makePart(n);curveTimes=null;curveCounts=null;
-  st=store.get("caddle-"+n,{start:null,end:null,guesses:[],done:false,won:false,gaveUp:false,ranked:false,official:null,rank:null,total:null,sw:null});
+function load(n,d=diff,mode=playMode){
+  cur=n;diff=d;playMode=mode;part=makePart(n,d);curveTimes=null;curveCounts=null;
+  st=store.get("caddle-"+pid(),{start:null,end:null,guesses:[],done:false,won:false,gaveUp:false,ranked:false,official:null,rank:null,total:null,sw:null});
   document.documentElement.style.setProperty("--hue",KIND[part.kind].hue);
   $("dwg").innerHTML=draw(part,n);
   $("kindPill").textContent=`${KIND[part.kind].emoji} ${part.name}`;
   $("dayLbl").textContent=`#${n} · ${fmtDate(dateOf(n))}`;
   $("prev").disabled=n<=1;$("next").disabled=n>=todayNum();
+  document.querySelectorAll("#diffSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.d===d));
+  $("unlLbl").textContent=`#${n} · ${DIFF(d)} · ${fmtDate(dateOf(n))}`;
+  $("diffBadge").textContent=d.toUpperCase();$("diffBadge").className="badge "+d;
+  $("skillChips").innerHTML="";
+  SKILLS[part.kind].forEach(k=>{const b=document.createElement("button");b.textContent=k;b.title=SKILL_INFO[k];b.onclick=()=>setView("learn",k);$("skillChips").appendChild(b)});
   $("confirm").hidden=true;$("overlay").hidden=true;
   render();loadBoard();
 }
-function save(){store.set("caddle-"+cur,st)}
+function save(){store.set("caddle-"+pid(),st)}
 const isToday=()=>cur===todayNum();
 const elapsed=()=>st.official!=null?st.official*1000:((st.end||Date.now())-st.start);
 
 function render(){
   const started=!!st.start,live=started&&!st.done;
   $("veil").hidden=started;$("dwg").classList.toggle("veiled",!started);
-  $("veilTitle").textContent=isToday()?"Drawing hidden":"Past puzzle";
+  $("veilTitle").textContent=isToday()?`Today's ${DIFF(diff)} part is hidden`:playMode==="unlimited"?"Archive puzzle":"Past puzzle";
   $("veilText").textContent=isToday()
-    ?(ONLINE?"The clock starts when you reveal it, and you only get one ranked run per day. Open your CAD program first.":"The clock starts when you reveal it. Open your CAD program first.")
-    :"This is an older part. You can play it for practice, but it won't be ranked.";
+    ?(ONLINE?"The clock starts when you reveal it, and you only get one ranked run per difficulty each day. Open your CAD program first.":"The clock starts when you reveal it. Open your CAD program first.")
+    :playMode==="unlimited"?"Practice mode: you're timed, but it won't go on the leaderboard.":"This is an older part. You can play it for practice, but it won't be ranked.";
   $("reveal").textContent=isToday()?"Start timer and reveal":"Reveal for practice";
   // mode pill
   const mp=$("modePill");
@@ -501,7 +688,7 @@ function render(){
   $("giveup").hidden=!live;
   $("nameSave").disabled=$("pname").value.trim().slice(0,20)===store.get("caddle-name","");
   if(!started)$("msg").textContent="Reveal the drawing to start.";
-  else if(st.done)$("msg").textContent="This part is finished. Come back tomorrow for a new one.";
+  else if(st.done)$("msg").textContent=playMode==="unlimited"?"Finished. Hit New puzzle for another one.":isToday()?"This part is finished. Come back tomorrow for a new one.":"Finished. This one was practice.";
   else if(!st.guesses.length)$("msg").textContent="Enter the mass from your CAD program.";
   // tries
   const ol=$("tries");ol.innerHTML="";
@@ -576,7 +763,8 @@ function fillModal(){
   else pc.hidden=true;
   drawCurve();
   $("mSkills").innerHTML="";skillsFor(part).forEach(k=>{const c=document.createElement("span");c.textContent=k;$("mSkills").appendChild(c)});
-  document.querySelector(".tomorrow b").textContent=isToday()?"Come back tomorrow!":"Today's part is waiting!";
+  if(playMode==="unlimited"){$("mTomorrow").textContent="Want another one?";$("mNext").hidden=false;$("nextIn").hidden=true}
+  else{$("mNext").hidden=true;$("nextIn").hidden=false;$("mTomorrow").textContent=isToday()?"Come back tomorrow!":"Today's parts are waiting!"}
 }
 let curveTimes=null,curveCounts=null;
 // Where you place among everyone who attempted: solve times as a smoothed curve,
@@ -632,15 +820,7 @@ function drawCurve(){
   if(you!=null&&attempted>1){const beaten=all.filter(t=>t>you).length+dnf;line+=` · you beat ${Math.round(beaten/(attempted-1)*100)}% (shaded)`}
   cap.textContent=line;
 }
-function skillsFor(p){
-  const s={
-    plate:["Rectangle sketch","Extrude","Through holes","Rectangular pattern","Symmetric placement"],
-    bushing:["Revolve","Stepped profile","Concentric bore","Diameter dimensions"],
-    bracket:["L-profile sketch","Extrude","Hole placement","Chained dimensions"]
-  }[p.kind].slice();
-  if(p.kind==="plate"&&p.D)s.splice(3,0,"Center bore");
-  return s.concat(["Custom material","Mass properties"]);
-}
+function skillsFor(p){return SKILLS[p.kind]}
 function beatPct(){const pl=st.played||0;return pl<=1?100:Math.round((pl-st.rank)/(pl-1)*100)}
 let lastFocus=null;
 function openModal(){lastFocus=document.activeElement;$("overlay").hidden=false;$("closeRes").focus()}
@@ -649,7 +829,7 @@ function closeModal(){$("overlay").hidden=true;if(lastFocus&&lastFocus.focus)las
 function shareText(){
   const squares=st.guesses.map(g=>SQ[band(Math.abs(g-part.mass)/part.mass)]).join("")+"⬜".repeat(MAX-st.guesses.length);
   const sec=Math.floor(elapsed()/1000),time=keycaps(mmss(elapsed()));
-  const lines=[`Caddle #${cur} ${KIND[part.kind].emoji}`];
+  const lines=[`Caddle #${cur} ${DIFF(diff)} ${KIND[part.kind].emoji}`];
   if(st.dq)lines.push(`🚫 ${time} disqualified`);
   else if(st.won)lines.push(`⏱️ ${time} ${speedTier(sec)}`);
   else if(st.gaveUp)lines.push(`🏳️ ${time}`);
@@ -663,21 +843,21 @@ function shareText(){
 }
 function stats(){
   let played=0,won=0,best=0;
-  for(let i=1;i<=todayNum();i++){const s=store.get("caddle-"+i,null);if(s&&s.done){played++;if(s.won){won++;const t=s.official!=null?s.official*1000:s.end-s.start;if(!best||t<best)best=t}}}
+  for(let i=1;i<=todayNum();i++)for(const k of [i,i+HARD]){const s=store.get("caddle-"+k,null);if(s&&s.done){played++;if(s.won){won++;const t=s.official!=null?s.official*1000:s.end-s.start;if(!best||t<best)best=t}}}
   return{played,won,best};
 }
 
 // ---------- leaderboard ----------
 async function loadBoard(){
   const ol=$("board"),empty=$("boardEmpty");
-  $("boardTitle").textContent=`Leaderboard · #${cur}`;
+  $("boardTitle").textContent=`Leaderboard · #${cur} ${DIFF(diff)}`;
   ol.innerHTML="";
   if(!ONLINE){empty.textContent="The leaderboard isn't connected yet.";$("refreshBoard").hidden=true;return}
   $("refreshBoard").hidden=false;empty.textContent="Loading…";
-  const n=cur;
+  const n=pid();
   try{
     const [rows,cnt,times]=await Promise.all([rpc("get_board",{p_puzzle:n,p_player:player}),rpc("get_counts",{p_puzzle:n}).catch(()=>null),rpc("get_times",{p_puzzle:n}).catch(()=>null)]);
-    if(n!==cur)return;
+    if(n!==pid())return;
     curveTimes=Array.isArray(times)?times:null;curveCounts=cnt&&cnt[0]?cnt[0]:null;
     if(st.done)fillModal();
     const c=cnt&&cnt[0];
@@ -745,7 +925,7 @@ async function finish(won,gaveUp){
   setTimeout(openModal,st.won?650:250);
   if(st.ranked){
     try{
-      const secs=await rpc("finish_attempt",{p_puzzle:cur,p_player:player,p_tries:Math.max(1,st.guesses.length),p_solved:won,p_gave_up:gaveUp,p_software:software});
+      const secs=await rpc("finish_attempt",{p_puzzle:pid(),p_player:player,p_tries:Math.max(1,st.guesses.length),p_solved:won,p_gave_up:gaveUp,p_software:software});
       if(typeof secs==="number"){st.official=secs;if(won&&secs<MIN_SECS){st.dq=true;st.won=false}save()}
     }catch(e){}
     render();await loadBoard();
@@ -759,7 +939,7 @@ $("reveal").onclick=async()=>{
   if(ONLINE&&isToday()){
     $("rankStatus").textContent="connecting…";
     try{
-      const ts=await rpc("start_attempt",{p_puzzle:cur,p_player:player,p_name:name||"Anonymous",p_software:software});
+      const ts=await rpc("start_attempt",{p_puzzle:pid(),p_player:player,p_name:name||"Anonymous",p_software:software});
       const t=Date.parse(ts);
       if(isFinite(t)){st.ranked=true;if(t<st.start-3000)st.start=t;save()}
     }catch(e){$("msg").textContent="Couldn't reach the leaderboard, so this run is practice only."}
@@ -799,8 +979,89 @@ $("nameForm").addEventListener("submit",async e=>{
     loadBoard();
   }catch(err){$("nameMsg").textContent=/allowed/.test(String(err))?"That name isn't allowed. Please pick another one.":"Saved on this device, but the leaderboard didn't update. Try again in a moment.";$("nameSave").disabled=false}
 });
-$("prev").onclick=()=>cur>1&&load(cur-1);
-$("next").onclick=()=>cur<todayNum()&&load(cur+1);
+$("prev").onclick=()=>cur>1&&load(cur-1,diff,"daily");
+$("next").onclick=()=>cur<todayNum()&&load(cur+1,diff,"daily");
+document.querySelectorAll("#diffSeg button").forEach(b=>b.onclick=()=>{store.set("caddle-diff",b.dataset.d);load(cur,b.dataset.d,"daily")});
+
+// ---------- tabs: daily / unlimited / learn ----------
+let unlFilter=store.get("caddle-unlf","any"),learnSel=null;
+function archive(filter){
+  const out=[];
+  for(let n=1;n<todayNum();n++)for(const d of["easy","hard"]){
+    if(filter!=="any"&&filter!==d)continue;
+    const s=store.get("caddle-"+(n+(d==="hard"?HARD:0)),null);
+    if(!(s&&s.done))out.push([n,d]);
+  }
+  return out;
+}
+function updateLeft(){const k=archive(unlFilter).length;$("unlLeft").textContent=k?`${k} unplayed in the archive`:"You've played every archive puzzle here!"}
+function newPuzzle(){
+  const pool=archive(unlFilter).filter(([n,d])=>!(playMode==="unlimited"&&n===cur&&d===diff));
+  if(!pool.length){updateLeft();return false}
+  const [n,d]=pool[Math.floor(Math.random()*pool.length)];
+  store.set("caddle-unl",[n,d]);load(n,d,"unlimited");updateLeft();return true;
+}
+function setView(v,arg){
+  view=v;
+  document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.view===v));
+  $("gameView").hidden=v==="learn";$("learnView").hidden=v!=="learn";
+  $("dailyBar").hidden=v!=="daily";$("unlBar").hidden=v!=="unlimited";
+  if(v==="daily"&&playMode!=="daily")load(todayNum(),diff,"daily");
+  if(v==="unlimited"){
+    document.querySelectorAll("#unlSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.d===unlFilter));
+    if(arg){store.set("caddle-unl",arg);load(arg[0],arg[1],"unlimited")}
+    else if(playMode!=="unlimited"){
+      const last=store.get("caddle-unl",null),ls=last&&store.get("caddle-"+(last[0]+(last[1]==="hard"?HARD:0)),null);
+      if(last&&last[0]<todayNum()&&!(ls&&ls.done))load(last[0],last[1],"unlimited");
+      else if(!newPuzzle()&&todayNum()>1)load(todayNum()-1,"easy","unlimited");
+    }
+    updateLeft();
+  }
+  if(v==="learn")renderLearn(arg||learnSel);
+  try{history.replaceState(null,"","#"+v)}catch(e){}
+}
+function openPuzzle(n,d){
+  if(n===todayNum()){setView("daily");store.set("caddle-diff",d);load(n,d,"daily")}
+  else setView("unlimited",[n,d]);
+  window.scrollTo(0,0);
+}
+let puzCache=null;
+function allPuzzles(){
+  if(puzCache&&puzCache.day===todayNum())return puzCache.list;
+  const list=[];for(let n=todayNum();n>=1;n--)for(const d of["easy","hard"])list.push({n,d,p:makePart(n,d)});
+  puzCache={day:todayNum(),list};return list;
+}
+function renderLearn(sel){
+  const q=$("skillSearch").value.trim().toLowerCase(),list=allPuzzles();
+  const names=Object.keys(SKILL_INFO).filter(k=>!q||k.toLowerCase().includes(q)||SKILL_INFO[k].toLowerCase().includes(q));
+  if(!sel&&names.length===1)sel=names[0];
+  learnSel=sel||null;
+  const grid=$("skillGrid");grid.innerHTML="";
+  if(!names.length){grid.innerHTML=`<p class="msg">No tools match "${q.replace(/[<>&"]/g,"")}". Try extrude, loft, shell, or pattern.</p>`}
+  names.forEach(k=>{
+    const cnt=list.filter(x=>SKILLS[x.p.kind].includes(k)).length;
+    const b=document.createElement("button");b.className="skillbtn";b.setAttribute("aria-pressed",k===learnSel);
+    const t=document.createElement("b");t.textContent=k;const c=document.createElement("span");c.textContent=`${cnt} puzzle${cnt===1?"":"s"}`;
+    b.append(t,c);b.onclick=()=>renderLearn(k);grid.appendChild(b);
+  });
+  const ol=$("skList");ol.innerHTML="";
+  if(!learnSel){$("skName").textContent="Pick a tool";$("skDesc").textContent="Choose a tool to see what it does and every puzzle that uses it.";return}
+  $("skName").textContent=learnSel;$("skDesc").textContent=SKILL_INFO[learnSel];
+  list.filter(x=>SKILLS[x.p.kind].includes(learnSel)).forEach(x=>{
+    const s=store.get("caddle-"+(x.n+(x.d==="hard"?HARD:0)),null);
+    const li=document.createElement("li"),b=document.createElement("button");
+    const pn=document.createElement("span");pn.className="pn";pn.textContent=`#${x.n}`;
+    const pt=document.createElement("span");pt.className="pt";pt.textContent=`${DIFF(x.d)} · ${titleCase(x.p.name)} · ${fmtDate(dateOf(x.n))}`;
+    const ps=document.createElement("span");ps.className="ps";
+    if(s&&s.done&&s.won){ps.textContent="✓ Solved";ps.classList.add("done")}else if(s&&s.done)ps.textContent="Played";else ps.textContent=x.n===todayNum()?"Today":"New";
+    b.append(pn,pt,ps);b.onclick=()=>openPuzzle(x.n,x.d);li.appendChild(b);ol.appendChild(li);
+  });
+}
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>setView(b.dataset.view));
+document.querySelectorAll("#unlSeg button").forEach(b=>b.onclick=()=>{unlFilter=b.dataset.d;store.set("caddle-unlf",unlFilter);document.querySelectorAll("#unlSeg button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.d===unlFilter));newPuzzle()||updateLeft()});
+$("newPuzzle").onclick=()=>newPuzzle();
+$("mNext").onclick=()=>{closeModal();newPuzzle()};
+$("skillSearch").addEventListener("input",()=>renderLearn(null));
 $("refreshBoard").onclick=loadBoard;
 $("openRes").onclick=openModal;
 $("closeRes").onclick=closeModal;
@@ -812,11 +1073,12 @@ $("copy").onclick=()=>{
   const fb=()=>{const r=document.createRange();r.selectNodeContents($("shareText"));const s=getSelection();s.removeAllRanges();s.addRange(r);$("copy").textContent="Selected, press Ctrl+C"};
   try{navigator.clipboard.writeText(t).then(ok,fb)}catch(e){fb()}
 };
-document.addEventListener("visibilitychange",()=>{if(!document.hidden&&cur!==todayNum()&&cur===todayNum()-1&&st.done)load(todayNum())});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&playMode==="daily"&&cur===todayNum()-1&&st.done)load(todayNum(),diff,"daily")});
 
 if(ONLINE){const d=new Date().toDateString();if(store.get("caddle-visit","")!==d){rpc("log_visit",{p_player:player}).then(()=>store.set("caddle-visit",d)).catch(()=>{})}}
 window.__caddle={makePart,keycaps,mmss};
-load(cur);
+load(todayNum(),diff,"daily");
+{const hv=location.hash.slice(1);setView(["daily","unlimited","learn"].includes(hv)?hv:"daily")}
 })();
 </script>
 </body>

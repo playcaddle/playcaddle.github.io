@@ -49,27 +49,6 @@ language sql immutable set search_path = public as $$
   select case when public.name_ok(btrim(coalesce(p, ''))) then btrim(p) else 'Anonymous' end;
 $$;
 
--- Puzzle #1 is 2026-09-01. Only today's puzzle (±1 day for time zones) can be started.
-create or replace function public.start_attempt(p_puzzle int, p_player uuid, p_name text, p_software text)
-returns timestamptz
-language plpgsql security definer set search_path = public as $$
-declare
-  today int := (current_date - date '2026-09-01') + 1;
-  ts timestamptz;
-begin
-  if p_puzzle < today - 1 or p_puzzle > today + 1 then
-    raise exception 'Only today''s puzzle can be ranked';
-  end if;
-  insert into attempts (puzzle, player, name, software)
-  values (
-    p_puzzle, p_player,
-    public.clean_name(p_name),
-    case when p_software in ('Onshape','Fusion','SOLIDWORKS') then p_software else 'Other' end
-  )
-  on conflict (puzzle, player) do nothing;          -- a refresh can't restart the clock
-  select started_at into ts from attempts where puzzle = p_puzzle and player = p_player;
-  return ts;
-end $$;
 
 create or replace function public.finish_attempt(p_puzzle int, p_player uuid, p_tries int, p_solved boolean, p_gave_up boolean, p_software text)
 returns int
@@ -108,10 +87,8 @@ language sql stable security definer set search_path = public as $$
   order by rk;
 $$;
 
-revoke execute on function public.start_attempt(int, uuid, text, text) from public;
 revoke execute on function public.finish_attempt(int, uuid, int, boolean, boolean, text) from public;
 revoke execute on function public.get_board(int, uuid) from public;
-grant  execute on function public.start_attempt(int, uuid, text, text) to anon, authenticated;
 grant  execute on function public.finish_attempt(int, uuid, int, boolean, boolean, text) to anon, authenticated;
 grant  execute on function public.get_board(int, uuid) to anon, authenticated;
 
@@ -159,28 +136,7 @@ revoke execute on function public.get_counts(int) from public;
 grant  execute on function public.log_visit(uuid) to anon, authenticated;
 grant  execute on function public.get_counts(int) to anon, authenticated;
 
--- Your private stats page: run   select * from daily_stats;   in the SQL Editor.
-create or replace view public.daily_stats with (security_invoker = true) as
-select d.day,
-       coalesce(v.visitors, 0) as visitors,
-       coalesce(a.started, 0)  as started,
-       coalesce(a.finished, 0) as finished,
-       coalesce(a.solved, 0)   as solved,
-       a.fastest
-from (select generate_series(date '2026-09-01', current_date, '1 day')::date as day) d
-left join (select day, count(*) as visitors from visits group by day) v using (day)
-left join (
-  select date '2026-09-01' + (puzzle - 1) as day,
-         count(*) as started,
-         count(*) filter (where finished_at is not null) as finished,
-         count(*) filter (where solved) as solved,
-         to_char(min(finished_at - started_at) filter (where solved), 'MI:SS') as fastest
-  from attempts group by puzzle
-) a using (day)
-order by d.day desc;
-revoke all on public.daily_stats from anon, authenticated;
-
--- Every solve time for a puzzle (seconds), for the bell curve. No names or IDs.
+-- 1) Bell-curve data: every solve time for a puzzle (seconds). No names or IDs.
 create or replace function public.get_times(p_puzzle int)
 returns int[]
 language sql stable security definer set search_path = public as $$
@@ -190,3 +146,54 @@ language sql stable security definer set search_path = public as $$
 $$;
 revoke execute on function public.get_times(int) from public;
 grant  execute on function public.get_times(int) to anon, authenticated;
+
+-- 2) Hard puzzles use ID = day + 10000, so today's Hard puzzle can be ranked too.
+create or replace function public.start_attempt(p_puzzle int, p_player uuid, p_name text, p_software text)
+returns timestamptz
+language plpgsql security definer set search_path = public as $$
+declare
+  today int := (current_date - date '2026-09-01') + 1;
+  day_no int := p_puzzle % 10000;
+  ts timestamptz;
+begin
+  if p_puzzle not between 1 and 19999 or day_no < today - 1 or day_no > today + 1 then
+    raise exception 'Only today''s puzzle can be ranked';
+  end if;
+  insert into attempts (puzzle, player, name, software)
+  values (
+    p_puzzle, p_player,
+    public.clean_name(p_name),
+    case when p_software in ('Onshape','Fusion','SOLIDWORKS') then p_software else 'Other' end
+  )
+  on conflict (puzzle, player) do nothing;
+  select started_at into ts from attempts where puzzle = p_puzzle and player = p_player;
+  return ts;
+end $$;
+
+-- 3) Your stats page, now split into Easy and Hard:   select * from daily_stats;
+drop view if exists public.daily_stats;
+create view public.daily_stats with (security_invoker = true) as
+with a as (
+  select date '2026-09-01' + (puzzle % 10000 - 1) as day,
+         case when puzzle >= 10000 then 'hard' else 'easy' end as diff,
+         count(*) as started,
+         count(*) filter (where solved) as solved,
+         to_char(min(finished_at - started_at) filter (where solved), 'MI:SS') as fastest
+  from attempts group by 1, 2
+)
+select d.day,
+       coalesce(v.visitors, 0)  as visitors,
+       coalesce(e.started, 0)   as easy_played,
+       coalesce(e.solved, 0)    as easy_solved,
+       e.fastest                as easy_fastest,
+       coalesce(h.started, 0)   as hard_played,
+       coalesce(h.solved, 0)    as hard_solved,
+       h.fastest                as hard_fastest
+from (select generate_series(date '2026-09-01', current_date, '1 day')::date as day) d
+left join (select day, count(*) as visitors from visits group by day) v using (day)
+left join a e on e.day = d.day and e.diff = 'easy'
+left join a h on h.day = d.day and h.diff = 'hard'
+order by d.day desc;
+revoke all on public.daily_stats from anon, authenticated;
+revoke execute on function public.start_attempt(int, uuid, text, text) from public;
+grant  execute on function public.start_attempt(int, uuid, text, text) to anon, authenticated;
