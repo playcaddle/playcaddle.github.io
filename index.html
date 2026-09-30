@@ -30,6 +30,9 @@
   --good:#16a34a; --warn:#eab308; --near:#f97316; --bad:#e11d48;
   --plate:#f97316; --bush:#0ea5a4; --brak:#db2777; --hue:var(--plate);
   --box:#ca8a04; --hub:#7c3aed; --hop:#0284c7; --encl:#059669; --hard:#1f2937;
+  --slot:#dc2626; --hex:#4f46e5; --shaft:#0891b2; --chan:#65a30d; --cbore:#c2410c; --cham:#0f766e;
+  --pul:#b45309; --tube:#475569; --gus:#a21caf; --can:#15803d;
+  --fins:#9f1239; --tbar:#6b21a8; --pock:#854d0e; --wedge:#4d7c0f; --spring:#be185d; --dome:#0369a1; --draft:#334155;
   --gold:#f5b301; --silver:#9aa7b4; --bronze:#c77b3a;
   --f-display:"Saira Condensed","Arial Narrow",sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -42,6 +45,9 @@
   --good:#34d399; --warn:#facc15; --near:#fb923c; --bad:#fb7185;
   --plate:#fb923c; --bush:#2dd4bf; --brak:#f472b6;
   --box:#facc15; --hub:#a78bfa; --hop:#38bdf8; --encl:#34d399; --hard:#e5e7eb;
+  --slot:#f87171; --hex:#818cf8; --shaft:#22d3ee; --chan:#a3e635; --cbore:#fdba74; --cham:#5eead4;
+  --pul:#fbbf24; --tube:#94a3b8; --gus:#e879f9; --can:#4ade80;
+  --fins:#fda4af; --tbar:#d8b4fe; --pock:#fcd34d; --wedge:#bef264; --spring:#f9a8d4; --dome:#7dd3fc; --draft:#cbd5e1;
   --gold:#facc15; --silver:#b8c4d0; --bronze:#e0985a; color-scheme:dark}}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -178,6 +184,8 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
 .dt{fill:var(--accent);font-family:var(--f-mono);font-size:12px;font-weight:500}
 .vt{fill:var(--muted);font-family:var(--f-mono);font-size:10px;letter-spacing:.08em}
 .frame{stroke:var(--ink);stroke-width:1.2;fill:var(--sheet)}
+.wire{fill:none;stroke:color-mix(in srgb,var(--hue) 60%,var(--ink));stroke-linecap:round}
+.wireb{fill:none;stroke:color-mix(in srgb,var(--hue) 28%,var(--sheet));stroke-linecap:round}
 .tbband{fill:var(--hue)}
 .tbt{fill:var(--ink);font-family:var(--f-mono);font-size:11px}
 .tbl{fill:var(--muted);font-family:var(--f-mono);font-size:8.5px;letter-spacing:.06em}
@@ -411,7 +419,24 @@ const KIND = {
   box:{label:"OPEN BOX", emoji:"📦", hue:"var(--box)"},
   hub:{label:"BOLTED HUB", emoji:"🛞", hue:"var(--hub)"},
   hopper:{label:"LOFTED HOPPER", emoji:"🔻", hue:"var(--hop)"},
-  enclosure:{label:"ROUNDED ENCLOSURE", emoji:"🗃️", hue:"var(--encl)"}
+  enclosure:{label:"ROUNDED ENCLOSURE", emoji:"🗃️", hue:"var(--encl)"},
+  slot:{label:"SLOTTED BAR", emoji:"📏", hue:"var(--slot)"},
+  hex:{label:"HEX STANDOFF", emoji:"🔶", hue:"var(--hex)"},
+  shaft:{label:"STEPPED SHAFT", emoji:"🪛", hue:"var(--shaft)"},
+  chan:{label:"U-CHANNEL", emoji:"🧱", hue:"var(--chan)"},
+  cbore:{label:"COUNTERBORED PLATE", emoji:"🕳️", hue:"var(--cbore)"},
+  cham:{label:"CHAMFERED BLOCK", emoji:"💎", hue:"var(--cham)"},
+  pulley:{label:"V-GROOVE PULLEY", emoji:"🎡", hue:"var(--pul)"},
+  tube:{label:"BENT TUBE", emoji:"🚰", hue:"var(--tube)"},
+  gusset:{label:"GUSSET BRACKET", emoji:"🔺", hue:"var(--gus)"},
+  canister:{label:"VENTED CANISTER", emoji:"🥫", hue:"var(--can)"},
+  fins:{label:"HEAT SINK", emoji:"🌡️", hue:"var(--fins)"},
+  tbar:{label:"T-BAR", emoji:"🏗️", hue:"var(--tbar)"},
+  pocket:{label:"POCKETED BLOCK", emoji:"📥", hue:"var(--pock)"},
+  wedge:{label:"RAMP BLOCK", emoji:"🧀", hue:"var(--wedge)"},
+  spring:{label:"COIL SPRING", emoji:"🌀", hue:"var(--spring)"},
+  dome:{label:"DOMED KNOB", emoji:"🍄", hue:"var(--dome)"},
+  draft:{label:"DRAFTED BOSS", emoji:"⛰️", hue:"var(--draft)"}
 };
 const SKILLS={
   plate:["Extrude","Through holes","Rectangular pattern","Symmetric placement"],
@@ -420,7 +445,24 @@ const SKILLS={
   box:["Extrude","Shell"],
   hub:["Revolve","Circular pattern","Concentric bore","Through holes"],
   hopper:["Loft","Extrude","Through holes"],
-  enclosure:["Extrude","Fillet","Shell"]
+  enclosure:["Extrude","Fillet","Shell"],
+  slot:["Extrude","Slot","Through holes"],
+  hex:["Polygon","Extrude","Through holes"],
+  shaft:["Revolve","Chained dimensions"],
+  chan:["Extrude","Offset entities","Through holes"],
+  cbore:["Extrude","Counterbore","Rectangular pattern"],
+  cham:["Extrude","Chamfer","Through holes"],
+  pulley:["Revolve","Revolved cut","Concentric bore"],
+  tube:["Sweep","Tangent arcs"],
+  gusset:["Extrude","Rib","Through holes"],
+  canister:["Extrude","Shell","Circular pattern","Through holes"],
+  fins:["Extrude","Linear pattern"],
+  tbar:["Extrude","Mirror","Through holes"],
+  pocket:["Extrude","Extruded cut","Sketch fillet"],
+  wedge:["Extrude","Through holes"],
+  spring:["Helix","Sweep"],
+  dome:["Revolve","Blind hole"],
+  draft:["Extrude","Draft"]
 };
 const SKILL_INFO={
   "Extrude":"Pull a 2D sketch straight out into a solid. It's the starting point for almost every part.",
@@ -433,7 +475,23 @@ const SKILL_INFO={
   "Through holes":"Cut a hole all the way through the part with the hole tool or an extruded cut.",
   "Concentric bore":"A hole that shares its center with a round feature. Use a concentric constraint to line it up.",
   "Symmetric placement":"Place features evenly about the part's center with symmetric or midpoint constraints.",
-  "Chained dimensions":"Locate features with dimensions measured one after another from an edge."
+  "Chained dimensions":"Locate features with dimensions measured one after another from an edge.",
+  "Slot":"Sketch a rounded slot in one step with the slot tool, then cut it through.",
+  "Polygon":"Sketch a regular shape like a hexagon by setting the number of sides and the size across the flats.",
+  "Offset entities":"Copy sketch lines at a set distance. Handy for walls with an even thickness.",
+  "Counterbore":"A stepped hole with a wider pocket on top so a bolt head sits flush. Hole Wizard makes it in one feature.",
+  "Chamfer":"Cut a flat bevel onto an edge, set by a distance and angle like 3 × 45°.",
+  "Revolved cut":"Spin a profile around an axis to remove material, like cutting a V-groove around a pulley.",
+  "Sweep":"Move a profile along a path. Use it for bent tubes, handles, and springs.",
+  "Tangent arcs":"Arcs that blend smoothly into straight lines, like the bend in a tube's path.",
+  "Rib":"Add a thin support wall from an open sketch line, like a gusset in the corner of a bracket.",
+  "Linear pattern":"Copy a feature in a straight line at equal spacing, like the fins on a heat sink.",
+  "Mirror":"Copy features across a plane of symmetry so both sides match exactly.",
+  "Extruded cut":"Push a sketch into the part to remove material, like cutting a pocket to a set depth.",
+  "Sketch fillet":"Round the corners of a sketch before extruding it, so the pocket or boss gets rounded corners.",
+  "Helix":"A curve that winds around an axis at a set pitch and number of turns. It's the path for springs and threads.",
+  "Blind hole":"A hole that stops at a set depth instead of going all the way through.",
+  "Draft":"Tilt faces by a small angle so a molded or cast part can slide out of its mold."
 };
 const HELP = {
   Onshape:["Right-click the part in the parts list and choose Assign material.","Pick Custom and enter the density from the title block (g/cm³).","Open Mass properties from the right-side panel and read the mass."],
@@ -470,14 +528,26 @@ function rng(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=
 function mk(r){return{int:(a,b,s=1)=>{const n=Math.floor((b-a)/s)+1;return a+Math.floor(r()*n)*s},pick:arr=>arr[Math.floor(r()*arr.length)]}}
 const fmt=n=>Number.isInteger(n)?String(n):n.toFixed(1);
 const HARD=10000; // hard puzzles are stored as day number + 10000
-function kindFor(n,diff){
-  if(diff==="hard")return["hub","hopper","enclosure"][(n-1)%3];
-  return n<=28?["plate","bushing","bracket"][(n-1)%3]:["plate","box","bracket","bushing"][(n-1)%4]; // Sept 1-28 stay exactly as they were
+const EASY_KINDS=["plate","bracket","bushing","box","slot","hex","shaft","chan","cbore","cham","fins","tbar","pocket","wedge"];
+const HARD_KINDS=["hub","hopper","enclosure","pulley","tube","gusset","canister","spring","dome","draft"];
+const BANK={easy:EASY_KINDS.length*12,hard:HARD_KINDS.length*12}; // practice parts for Unlimited, 12 of each kind
+function cycleOrder(list,c,salt){const r=rng(c*131+salt),o=list.slice();for(let i=o.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[o[i],o[j]]=[o[j],o[i]]}return o}
+function kindFor(n,diff,bank){
+  const list=diff==="hard"?HARD_KINDS:EASY_KINDS;
+  if(bank)return list[(n-1)%list.length];
+  // days 1-29 stay exactly as they were
+  if(diff==="hard"&&n<=29)return["hub","hopper","enclosure"][(n-1)%3];
+  if(diff!=="hard"&&n<=28)return["plate","bushing","bracket"][(n-1)%3];
+  if(diff!=="hard"&&n===29)return"plate";
+  // from day 30: every kind once per cycle, shuffled, never the same kind two days running
+  const k=n-30,L=list.length,c=Math.floor(k/L),salt=diff==="hard"?7:3,o=cycleOrder(list,c,salt);
+  if(c>0&&o[0]===cycleOrder(list,c-1,salt)[L-1])[o[0],o[1]]=[o[1],o[0]];
+  return o[k%L];
 }
-function makePart(n,diff="easy"){
-  const R=mk(rng(diff==="hard"?n*7919+101:n*9973+17));
+function makePart(n,diff="easy",bank=false){
+  const R=mk(rng(bank?n*104729+(diff==="hard"?71:37):diff==="hard"?n*7919+101:n*9973+17));
   const mat=MATERIALS[(n*3+R.int(0,4))%MATERIALS.length];
-  const kind=kindFor(n,diff),PI=Math.PI;
+  const kind=kindFor(n,diff,bank),PI=Math.PI;
   let p;
   if(kind==="plate"){
     const L=R.int(70,130,5),W=R.int(40,70,5),T=R.int(4,12);
@@ -505,12 +575,81 @@ function makePart(n,diff="easy"){
     const N=R.pick([3,4,5,6,8]),dh=R.pick([4.5,5.5,6.6]);
     const P=R.int(Math.ceil((Dh+dh+6)/2)*2,Math.floor((Df-dh-6)/2)*2,2);
     p={kind,Df,tf,Dh,hh,d,N,dh,P,V:PI/4*(Df*Df*tf+Dh*Dh*hh-d*d*(tf+hh)-N*dh*dh*tf)};
+  }else if(kind==="slot"){ // bar with a centered slot and a hole near each end
+    const L=R.int(80,150,5),W=R.int(30,60,5),T=R.int(4,10),w=Math.min(R.pick([6,8,10,12]),W-16);
+    const d=R.pick([5.5,6.6,9]),e=Math.max(R.int(8,12),Math.ceil(d/2+4));
+    const Lc=R.int(15,Math.max(15,Math.floor((L-2*e-d-w-8)/5)*5),5);
+    p={kind,L,W,T,w,Lc,d,e,V:T*(L*W-(Lc*w+PI*w*w/4)-2*PI*d*d/4)};
+  }else if(kind==="hex"){ // hex standoff with a through bore
+    const F=R.int(12,36,2),H=R.int(15,50,5),d=R.int(4,Math.max(4,F-8));
+    p={kind,F,H,d,V:(Math.sqrt(3)/2)*F*F*H-PI*d*d/4*H};
+  }else if(kind==="shaft"){ // three concentric steps, largest first
+    const D1=R.int(24,44,2),D2=R.int(16,D1-6,2),D3=R.int(10,D2-4,2),L1=R.int(15,40,5),L2=R.int(15,40,5),L3=R.int(15,40,5);
+    p={kind,D1,D2,D3,L1,L2,L3,V:PI/4*(D1*D1*L1+D2*D2*L2+D3*D3*L3)};
+  }else if(kind==="chan"){ // U-channel, open top, two holes in the base
+    const W=R.int(30,70,5),H=R.int(20,50,5),t=R.int(2,6),L=R.int(60,140,10),d=R.pick([4.5,5.5,6.6]),e=R.int(10,20);
+    p={kind,W,H,t,L,d,e,V:L*(W*H-(W-2*t)*(H-t))-2*PI*d*d/4*t};
+  }else if(kind==="cbore"){ // plate with four counterbored holes
+    const L=R.int(70,130,5),W=R.int(50,90,5),T=R.int(10,20),d=R.pick([5.5,6.6,9]),Dc={5.5:10,6.6:11,9:15}[d];
+    const dc=R.int(Math.ceil(T*0.3),Math.floor(T*0.6)),e=Math.max(R.int(10,15),Math.ceil(Dc/2+4));
+    p={kind,L,W,T,d,Dc,dc,e,V:T*L*W-4*(PI/4)*(d*d*T+(Dc*Dc-d*d)*dc)};
+  }else if(kind==="cham"){ // block, four vertical edges chamfered, center through hole
+    const L=R.int(40,90,5),W=R.int(30,70,5),H=R.int(15,40,5),c=R.int(3,Math.max(3,Math.min(12,Math.floor(Math.min(L,W)/5)))),d=R.int(6,Math.max(6,Math.floor(Math.min(L,W)/2)));
+    p={kind,L,W,H,c,d,V:H*(L*W-2*c*c-PI*d*d/4)};
+  }else if(kind==="pulley"){ // disc with a centered V-groove around the rim and a bore
+    const D=R.int(60,120,2),Wd=R.int(14,30,2),d=R.int(8,20),g=R.int(5,Math.max(5,Math.min(15,Math.floor((D-d)/2)-12)));
+    const a=R.int(8,Wd-4,2),b=R.int(2,a-4,2),Ro=D/2,r0=Ro-g,k=(a-b)/g;
+    const Vg=2*PI*(b*(Ro*Ro-r0*r0)/2+k*((Ro**3-r0**3)/3-r0*(Ro*Ro-r0*r0)/2));
+    p={kind,D,Wd,d,g,a,b,V:PI/4*(D*D-d*d)*Wd-Vg};
+  }else if(kind==="tube"){ // tube swept along two straight legs joined by a 90° bend
+    const D=R.int(12,30,2),t=R.int(2,4),Rb=R.int(Math.ceil(1.5*D),3*D),L1=R.int(30,90,5),L2=R.int(30,90,5),Di=D-2*t;
+    p={kind,D,t,Rb,L1,L2,V:PI/4*(D*D-Di*Di)*(L1+L2+PI*Rb/2)};
+  }else if(kind==="gusset"){ // L-bracket with a triangular rib in the inside corner and two base holes
+    const L=R.int(60,110,5),W=R.int(32,60,4),H=R.int(40,80,5),T=R.int(4,8),tr=R.int(3,Math.max(3,Math.min(8,Math.floor(W/4))));
+    const ga=R.int(15,Math.max(15,Math.min(40,L-T-25))),gb=R.int(15,Math.max(15,Math.min(40,H-T-5)));
+    const d=R.pick([4.5,5.5,6.6]),px=R.int(Math.ceil(d/2+5),Math.max(Math.ceil(d/2+5),Math.floor(L-T-ga-d/2-4)));
+    p={kind,L,W,H,T,tr,ga,gb,d,px,V:T*W*L+T*W*(H-T)+tr*ga*gb/2-2*PI*d*d/4*T};
+  }else if(kind==="canister"){ // open cup: wall + floor, floor holes on a bolt circle plus a center hole
+    const D=R.int(50,90,2),H=R.int(25,60,5),t=R.int(2,4),N=R.pick([4,5,6,8]),dh=R.pick([4,5,6]);
+    const Pmin=Math.max(Math.ceil((dh+2)/Math.sin(PI/N)),dh+12),Pmax=D-2*t-dh-4;
+    const P=R.int(Math.ceil(Pmin/2)*2,Math.max(Math.ceil(Pmin/2)*2,Math.floor(Pmax/2)*2),2),dc=R.int(6,Math.max(6,P-dh-6));
+    p={kind,D,H,t,N,dh,P,dc,V:PI/4*D*D*H-PI/4*(D-2*t)**2*(H-t)-(N*PI/4*dh*dh+PI/4*dc*dc)*t};
+  }else if(kind==="fins"){ // heat sink: base plate + equally spaced full-width fins, end fins flush
+    const L=R.int(50,110,5),W=R.int(30,70,5),tb=R.int(4,8),tf=R.int(2,4),hf=R.int(10,30,2);
+    const N=Math.max(3,Math.min(R.int(4,9),Math.floor((L+3)/(tf+3))));
+    p={kind,L,W,tb,tf,hf,N,V:L*W*tb+N*tf*W*hf};
+  }else if(kind==="tbar"){ // T-profile extrusion, four holes through the flange wings
+    const tw=R.int(4,10),d=R.pick([4.5,5.5,6.6]),bf=R.int(Math.ceil(Math.max(30,tw+2*d+14)/5)*5,80,5);
+    const tf=R.int(4,10),hw=R.int(15,45,5),L=R.int(60,140,10),e=R.int(10,20);
+    const ed=R.int(Math.ceil(d/2+3),Math.max(Math.ceil(d/2+3),Math.floor(bf/2-tw/2-d/2-2)));
+    p={kind,L,bf,tf,tw,hw,d,e,ed,V:L*(bf*tf+tw*hw)-4*PI*d*d/4*tf};
+  }else if(kind==="pocket"){ // block with a centered rounded-corner pocket
+    const L=R.int(50,110,5),W=R.int(40,80,5),H=R.int(12,30,2),m=R.int(5,12);
+    const rp=R.int(2,Math.max(2,Math.min(10,Math.floor(Math.min(L,W)/4-m/2)))),dp=R.int(3,H-4);
+    p={kind,L,W,H,m,rp,dp,V:L*W*H-dp*((L-2*m)*(W-2*m)-(4-PI)*rp*rp)};
+  }else if(kind==="wedge"){ // right-triangle ramp with one vertical through hole
+    const a=R.int(40,90,5),b=R.int(20,50,5),W=R.int(20,50,5),d=R.int(5,Math.max(5,Math.min(12,W-10)));
+    const xc=R.int(Math.ceil(d/2+5),Math.max(Math.ceil(d/2+5),Math.floor(a*0.55)));
+    p={kind,a,b,W,d,xc,V:W*a*b/2-PI*d*d/4*b*(1-xc/a)};
+  }else if(kind==="spring"){ // circle swept along a helix
+    const d=R.pick([2,2.5,3,3.5,4,5]),Dm=R.int(Math.max(16,Math.ceil(4*d/2)*2),40,2),pt=R.int(Math.ceil(d+2),Math.ceil(3*d+4)),n=R.int(4,10);
+    p={kind,d,Dm,pt,n,V:PI*d*d/4*n*Math.sqrt((PI*Dm)**2+pt*pt)};
+  }else if(kind==="dome"){ // cylinder base + spherical dome, flat-bottom blind hole from below
+    const Db=R.int(30,70,2),hb=R.int(5,20),hc=R.int(6,Math.floor(Db/2)),a2=Db/2,Rs=(a2*a2+hc*hc)/(2*hc);
+    const d=R.int(4,Math.max(4,Math.floor(Db/3))),hEdge=hb+Math.sqrt(Rs*Rs-(d/2)**2)-(Rs-hc),dep=R.int(5,Math.max(5,Math.floor(hEdge-3)));
+    p={kind,Db,hb,hc,d,dep,V:PI/4*Db*Db*hb+PI*hc*hc*(3*Rs-hc)/3-PI/4*d*d*dep};
+  }else if(kind==="draft"){ // plate + centered rectangular boss with draft on all four sides
+    const L=R.int(60,110,5),W=R.int(40,80,5),T=R.int(4,10),th=R.pick([3,5,7,10]),tn=Math.tan(th*PI/180);
+    let hb=R.int(8,30,2);const Lb=R.int(25,L-20,5),Wb=R.int(20,W-15,5);
+    while(hb>8&&Math.min(Lb,Wb)-2*hb*tn<8)hb-=2;
+    p={kind,L,W,T,Lb,Wb,hb,th,V:L*W*T+Lb*Wb*hb-(Lb+Wb)*tn*hb*hb+4/3*tn*tn*hb**3};
   }else{ // hopper: square base plate + straight loft between two squares + through hole
     const B=R.int(50,90,5),tb=R.int(5,10),s1=B-2*R.int(3,8);
     const s2=R.int(Math.ceil(s1*0.35/2)*2,Math.floor(s1*0.7/2)*2,2),h=R.int(20,50,5),d=R.int(6,Math.max(6,s2-8));
     p={kind,B,tb,s1,s2,h,d,V:B*B*tb+h/3*(s1*s1+s2*s2+s1*s2)-PI*d*d/4*(tb+h)};
   }
-  p.diff=diff;p.name=KIND[kind].label;p.mat=mat;p.mass=p.V/1000*mat.rho;
+  p.diff=diff;p.bank=bank;p.name=KIND[kind].label;p.mat=mat;p.mass=p.V/1000*mat.rho;
+  p.no=bank?`P${n}`:String(n).padStart(3,"0");p.dateText=bank?"PRACTICE":fmtDate(dateOf(n)).toUpperCase();
   return p;
 }
 
@@ -521,8 +660,8 @@ const rect=(x,y,w,h,c="fillp")=>S.push(`<rect class="${c}" x="${x}" y="${y}" wid
 const circ=(x,y,r,c="hole")=>S.push(`<circle class="${c}" cx="${x}" cy="${y}" r="${r}"/>`);
 const txt=(x,y,t,c="dt",a="middle",rot)=>S.push(`<text class="${c}" x="${x}" y="${y}" text-anchor="${a}"${rot?` transform="rotate(${rot} ${x} ${y})"`:""}>${t}</text>`);
 function dimH(xa,xb,yRef,yDim,t){const s=Math.sign(yDim-yRef)||-1;ln(xa,yRef+3*s,xa,yDim+5*s,"dm");ln(xb,yRef+3*s,xb,yDim+5*s,"dm");S.push(`<line class="dm" x1="${xa}" y1="${yDim}" x2="${xb}" y2="${yDim}" marker-start="url(#ar)" marker-end="url(#ar)"/>`);if(Math.abs(xb-xa)<16)txt(Math.max(xa,xb)+6,yDim+4,t,"dt","start");else txt((xa+xb)/2,yDim-4,t)}
-function dimV(ya,yb,xRefA,xDim,t,xRefB){if(xRefB===undefined)xRefB=xRefA;const s=Math.sign(xDim-xRefA)||-1;ln(xRefA+3*s,ya,xDim+5*s,ya,"dm");ln(xRefB+3*s,yb,xDim+5*s,yb,"dm");S.push(`<line class="dm" x1="${xDim}" y1="${ya}" x2="${xDim}" y2="${yb}" marker-start="url(#ar)" marker-end="url(#ar)"/>`);if(Math.abs(yb-ya)<16)txt(xDim+5,(ya+yb)/2+4,t,"dt","start");else txt(xDim-4,(ya+yb)/2,t,"dt","middle",-90)}
-function leader(x1,y1,x2,y2,t){S.push(`<polyline class="dm" points="${x1},${y1} ${x2},${y2} ${x2+14},${y2}" marker-start="url(#ar)"/>`);txt(x2+18,y2+4,t,"dt","start")}
+function dimV(ya,yb,xRefA,xDim,t,xRefB){if(xRefB===undefined)xRefB=xRefA;const s=Math.sign(xDim-xRefA)||-1;ln(xRefA+3*s,ya,xDim+5*s,ya,"dm");ln(xRefB+3*s,yb,xDim+5*s,yb,"dm");S.push(`<line class="dm" x1="${xDim}" y1="${ya}" x2="${xDim}" y2="${yb}" marker-start="url(#ar)" marker-end="url(#ar)"/>`);if(Math.abs(yb-ya)<16){const lf=xDim<xRefA;txt(lf?xDim-5:xDim+5,(ya+yb)/2+4,t,"dt",lf?"end":"start")}else txt(xDim-4,(ya+yb)/2,t,"dt","middle",-90)}
+function leader(x1,y1,x2,y2,t){const dx=x2>=x1?14:-14;S.push(`<polyline class="dm" points="${x1},${y1} ${x2},${y2} ${x2+dx},${y2}" marker-start="url(#ar)"/>`);if(t)txt(x2+dx+(dx>0?4:-4),y2+4,t,"dt",dx>0?"start":"end")}
 function cross(x,y,r){ln(x-r-5,y,x+r+5,y,"ctr");ln(x,y-r-5,x,y+r+5,"ctr")}
 function draw(p,n){
   S.length=0;
@@ -601,6 +740,244 @@ function draw(p,n){
     dimH(cx-a2/2,cx+a2/2,y1,y1-14,`${fmt(p.s2)} SQ`);
     dimV(y1,yp,cx+a2/2,x0+bs+24,fmt(p.h),x0+bs);dimV(yp,yb,x0,x0-20,fmt(p.tb));
     txt(x0,yb+30,"STRAIGHT LOFT BETWEEN TWO CENTERED SQUARES","vt","start");
+  }else if(p.kind==="slot"){
+    const s=Math.min(440/p.L,215/(p.W+p.T));
+    const w=p.L*s,h=p.W*s,x0=cx-w/2,y0=80,cy0=y0+h/2,y1=y0+h+72,t=p.T*s,hr=p.d/2*s,es=p.e*s,sr=p.w/2*s,sl=p.Lc/2*s;
+    txt(x0,y0-50,"TOP","vt","start");rect(x0,y0,w,h);
+    S.push(`<path class="hole" d="M${cx-sl},${cy0-sr}H${cx+sl}A${sr},${sr} 0 0 1 ${cx+sl},${cy0+sr}H${cx-sl}A${sr},${sr} 0 0 1 ${cx-sl},${cy0-sr}Z"/>`);
+    [cx-sl,cx+sl].forEach(x=>ln(x,cy0-sr-5,x,cy0+sr+5,"ctr"));ln(cx-sl-sr-6,cy0,cx+sl+sr+6,cy0,"ctr");
+    [x0+es,x0+w-es].forEach(x=>{circ(x,cy0,hr);cross(x,cy0,hr)});
+    dimH(x0,x0+w,y0,y0-34,fmt(p.L));dimH(x0,x0+es,y0,y0-14,fmt(p.e));dimV(y0,y0+h,x0,x0-22,fmt(p.W));
+    dimH(cx-sl,cx+sl,cy0+sr,y0+h+20,fmt(p.Lc));
+    leader(cx+sl+sr*a,cy0-sr*a,x0+w+30,y0+4,`SLOT ${fmt(p.w)} WIDE`);
+    leader(x0+w-es+hr*a,cy0+hr*a,x0+w+30,y0+h+4,`2× Ø${fmt(p.d)} THRU`);
+    txt(x0,y1-10,"FRONT","vt","start");rect(x0,y1,w,t);
+    [x0+es,x0+w-es].forEach(x=>{ln(x-hr,y1,x-hr,y1+t,"hid");ln(x+hr,y1,x+hr,y1+t,"hid")});
+    [cx-sl-sr,cx+sl+sr].forEach(x=>ln(x,y1,x,y1+t,"hid"));
+    dimV(y1,y1+t,x0+w,x0+w+22,fmt(p.T));
+    txt(x0,y1+t+30,`SLOT AND HOLES ON CENTERLINE · SLOT ${fmt(p.Lc)} CENTER TO CENTER`,"vt","start");
+  }else if(p.kind==="hex"){
+    const AC=2*p.F/Math.sqrt(3),s=Math.min(250/AC,205/(p.F+p.H));
+    const Rc=AC/2*s,hf=p.F/2*s,cy0=90+hf,x0=cx-Rc,y1=cy0+hf+70,hs=p.H*s,rb=p.d/2*s;
+    txt(x0,cy0-hf-24,"TOP","vt","start");
+    S.push(`<polygon class="fillp" points="${[0,60,120,180,240,300].map(g=>`${(cx+Rc*Math.cos(g*Math.PI/180)).toFixed(2)},${(cy0+Rc*Math.sin(g*Math.PI/180)).toFixed(2)}`).join(" ")}"/>`);
+    circ(cx,cy0,rb);cross(cx,cy0,Rc);
+    dimV(cy0-hf,cy0+hf,cx+Rc/2,cx+Rc+26,`${fmt(p.F)} A/F`);
+    leader(cx+rb*a,cy0-rb*a,cx+Rc+60,cy0-hf-10,`Ø${fmt(p.d)} THRU`);
+    txt(x0,y1-10,"FRONT","vt","start");rect(x0,y1,2*Rc,hs);
+    ln(cx-Rc/2,y1,cx-Rc/2,y1+hs);ln(cx+Rc/2,y1,cx+Rc/2,y1+hs);
+    ln(cx-rb,y1,cx-rb,y1+hs,"hid");ln(cx+rb,y1,cx+rb,y1+hs,"hid");ln(cx,y1-8,cx,y1+hs+8,"ctr");
+    dimV(y1,y1+hs,cx+Rc,cx+Rc+26,fmt(p.H));
+    txt(x0,y1+hs+30,`REGULAR HEXAGON · ${fmt(p.F)} ACROSS FLATS · BORE CENTERED`,"vt","start");
+  }else if(p.kind==="shaft"){
+    const Lt=p.L1+p.L2+p.L3,s=Math.min(340/Lt,180/p.D1),Ds=[p.D1,p.D2,p.D3],Ls=[p.L1,p.L2,p.L3],xs=[70],cy0=200,R1=p.D1*s/2;
+    Ls.forEach(l=>xs.push(xs[xs.length-1]+l*s));
+    txt(70,cy0-R1-40,"FRONT","vt","start");
+    const pts=[];for(let i=0;i<3;i++){const r=Ds[i]*s/2;pts.push(`${xs[i]},${cy0-r}`,`${xs[i+1]},${cy0-r}`)}
+    for(let i=2;i>=0;i--){const r=Ds[i]*s/2;pts.push(`${xs[i+1]},${cy0+r}`,`${xs[i]},${cy0+r}`)}
+    S.push(`<polygon class="fillp" points="${pts.join(" ")}"/>`);
+    [1,2].forEach(i=>{const r=Ds[i]*s/2;ln(xs[i],cy0-r,xs[i],cy0+r)});
+    ln(xs[0]-8,cy0,xs[3]+8,cy0,"ctr");
+    Ds.forEach((D,i)=>{const xm=(xs[i]+xs[i+1])/2;dimV(cy0-D*s/2,cy0+D*s/2,xm,xm,`Ø${fmt(D)}`)});
+    Ls.forEach((l,i)=>dimH(xs[i],xs[i+1],cy0+Ds[i]*s/2,cy0+R1+24,fmt(l)));
+    dimH(xs[0],xs[3],cy0+R1,cy0+R1+52,fmt(Lt));
+    const ex=xs[3]+60+R1;
+    txt(ex-R1,cy0-R1-40,"RIGHT","vt","start");
+    Ds.forEach(D=>circ(ex,cy0,D*s/2,"fillp"));cross(ex,cy0,R1);
+    txt(70,cy0+R1+88,"ALL STEPS CONCENTRIC · ONE REVOLVE OR THREE EXTRUDES","vt","start");
+  }else if(p.kind==="chan"){
+    const s=Math.min(350/(p.L+p.W),205/(p.W+p.H));
+    const w=p.L*s,h=p.W*s,hh=p.H*s,ts=p.t*s,x0=Math.max(70,cx-(w+50+h)/2),y0=85,cy0=y0+h/2,y1=y0+h+62,hr=p.d/2*s,es=p.e*s,xr=x0+w+50;
+    txt(x0,y0-52,"TOP","vt","start");rect(x0,y0,w,h);ln(x0,y0+ts,x0+w,y0+ts);ln(x0,y0+h-ts,x0+w,y0+h-ts);
+    [x0+es,x0+w-es].forEach(x=>{circ(x,cy0,hr);cross(x,cy0,hr)});
+    dimH(x0,x0+w,y0,y0-34,fmt(p.L));dimH(x0,x0+es,y0,y0-14,fmt(p.e));dimV(y0,y0+h,x0,x0-22,fmt(p.W));
+    leader(x0+w-es+hr*a,cy0-hr*a,x0+w+26,y0-8,`2× Ø${fmt(p.d)} THRU BASE`);
+    txt(x0,y1-10,"FRONT","vt","start");rect(x0,y1,w,hh);
+    ln(x0,y1+hh-ts,x0+w,y1+hh-ts,"hid");
+    [x0+es,x0+w-es].forEach(x=>{ln(x-hr,y1+hh-ts,x-hr,y1+hh,"hid");ln(x+hr,y1+hh-ts,x+hr,y1+hh,"hid")});
+    txt(xr,y1-30,"RIGHT","vt","start");
+    S.push(`<polygon class="fillp" points="${xr},${y1} ${xr+ts},${y1} ${xr+ts},${y1+hh-ts} ${xr+h-ts},${y1+hh-ts} ${xr+h-ts},${y1} ${xr+h},${y1} ${xr+h},${y1+hh} ${xr},${y1+hh}"/>`);
+    ln(xr+h/2-hr,y1+hh-ts,xr+h/2-hr,y1+hh,"hid");ln(xr+h/2+hr,y1+hh-ts,xr+h/2+hr,y1+hh,"hid");
+    dimH(xr,xr+h,y1+hh,y1+hh+20,fmt(p.W));dimV(y1,y1+hh,xr+h,xr+h+22,fmt(p.H));
+    dimH(xr,xr+ts,y1,y1-12,fmt(p.t));dimV(y1+hh-ts,y1+hh,xr,xr-14,fmt(p.t));
+    txt(x0,y1+hh+44,`OPEN TOP · WALLS AND BASE ${fmt(p.t)} THICK · HOLES ON CENTERLINE`,"vt","start");
+  }else if(p.kind==="cbore"){
+    const s=Math.min(440/p.L,235/(p.W+p.T));
+    const w=p.L*s,h=p.W*s,x0=cx-w/2,y0=80,t=p.T*s,y1=y0+h+60,hr=p.d/2*s,Rc=p.Dc/2*s,es=p.e*s,dcs=p.dc*s;
+    txt(x0,y0-50,"TOP","vt","start");rect(x0,y0,w,h);
+    [[x0+es,y0+es],[x0+w-es,y0+es],[x0+es,y0+h-es],[x0+w-es,y0+h-es]].forEach(([x,y])=>{circ(x,y,Rc);circ(x,y,hr);cross(x,y,Rc)});
+    dimH(x0,x0+w,y0,y0-34,fmt(p.L));dimH(x0,x0+es,y0,y0-14,fmt(p.e));dimV(y0,y0+h,x0,x0-38,fmt(p.W));dimV(y0,y0+es,x0,x0-16,fmt(p.e));
+    leader(x0+w-es+Rc*a,y0+h-es+Rc*a,x0+w+26,y0+h+6,`4× Ø${fmt(p.d)} THRU`);
+    txt(x0+w+44,y0+h+24,`C'BORE Ø${fmt(p.Dc)} × ${fmt(p.dc)} DEEP`,"dt","start");
+    txt(x0,y1-10,"FRONT","vt","start");rect(x0,y1,w,t);
+    [x0+es,x0+w-es].forEach(x=>{
+      S.push(`<polyline class="hid" points="${x-Rc},${y1} ${x-Rc},${y1+dcs} ${x-hr},${y1+dcs} ${x-hr},${y1+t}"/>`);
+      S.push(`<polyline class="hid" points="${x+Rc},${y1} ${x+Rc},${y1+dcs} ${x+hr},${y1+dcs} ${x+hr},${y1+t}"/>`);
+      ln(x,y1-6,x,y1+t+6,"ctr")});
+    dimV(y1,y1+t,x0+w,x0+w+22,fmt(p.T));
+    txt(x0,y1+t+30,"HOLE PATTERN SYMMETRIC ABOUT PART CENTER","vt","start");
+  }else if(p.kind==="cham"){
+    const s=Math.min(440/p.L,235/(p.W+p.H));
+    const w=p.L*s,h=p.W*s,x0=cx-w/2,y0=80,c=p.c*s,hs=p.H*s,y1=y0+h+60,rb=p.d/2*s,cy0=y0+h/2;
+    txt(x0,y0-50,"TOP","vt","start");
+    S.push(`<polygon class="fillp" points="${x0+c},${y0} ${x0+w-c},${y0} ${x0+w},${y0+c} ${x0+w},${y0+h-c} ${x0+w-c},${y0+h} ${x0+c},${y0+h} ${x0},${y0+h-c} ${x0},${y0+c}"/>`);
+    circ(cx,cy0,rb);cross(cx,cy0,rb);
+    dimH(x0,x0+w,y0,y0-34,fmt(p.L));dimV(y0,y0+h,x0,x0-22,fmt(p.W));
+    leader(x0+w-c/2,y0+c/2,x0+w+30,y0-10,`4× ${fmt(p.c)} × 45° CHAMFER`);
+    leader(cx+rb*a,cy0-rb*a,x0+w+30,cy0+8,`Ø${fmt(p.d)} THRU`);
+    txt(x0,y1-10,"FRONT","vt","start");rect(x0,y1,w,hs);
+    ln(x0+c,y1,x0+c,y1+hs);ln(x0+w-c,y1,x0+w-c,y1+hs);
+    ln(cx-rb,y1,cx-rb,y1+hs,"hid");ln(cx+rb,y1,cx+rb,y1+hs,"hid");ln(cx,y1-8,cx,y1+hs+8,"ctr");
+    dimV(y1,y1+hs,x0+w,x0+w+22,fmt(p.H));
+    txt(x0+44,y0-57,"ALL FOUR VERTICAL EDGES CHAMFERED · HOLE CENTERED","vt","start");
+  }else if(p.kind==="pulley"){
+    const s=Math.min(280/p.D,195/(p.D+p.Wd));
+    const R=p.D/2*s,rb=p.d/2*s,g=p.g*s,A=p.a/2*s,B=p.b/2*s,cy0=80+R,y1=80+2*R+60,ws=p.Wd*s,zc=y1+ws/2;
+    txt(cx-R,64,"TOP","vt","start");
+    circ(cx,cy0,R,"fillp");circ(cx,cy0,R-g,"hid");circ(cx,cy0,rb);cross(cx,cy0,R);
+    leader(cx+rb*a,cy0-rb*a,cx+R+40,cy0-R+6,`Ø${fmt(p.d)} THRU`);
+    txt(cx-R,y1-40,"FRONT","vt","start");
+    const side=sx=>[[cx+sx*R,y1],[cx+sx*R,zc-A],[cx+sx*(R-g),zc-B],[cx+sx*(R-g),zc+B],[cx+sx*R,zc+A],[cx+sx*R,y1+ws]];
+    S.push(`<polygon class="fillp" points="${[...side(1),...side(-1).reverse()].map(q=>q.join(",")).join(" ")}"/>`);
+    ln(cx-R,zc-A,cx+R,zc-A);ln(cx-R,zc+A,cx+R,zc+A);ln(cx-R+g,zc-B,cx+R-g,zc-B);ln(cx-R+g,zc+B,cx+R-g,zc+B);
+    ln(cx-rb,y1,cx-rb,y1+ws,"hid");ln(cx+rb,y1,cx+rb,y1+ws,"hid");ln(cx,y1-10,cx,y1+ws+10,"ctr");
+    dimH(cx-R,cx+R,y1+ws,y1+ws+22,`Ø${fmt(p.D)}`);
+    dimV(zc-A,zc+A,cx+R,cx+R+22,fmt(p.a));dimV(y1,y1+ws,cx+R,cx+R+50,fmt(p.Wd));
+    txt(cx-R,y1+ws+46,`V-GROOVE ${fmt(p.a)} WIDE AT RIM · ${fmt(p.b)} AT BOTTOM · ${fmt(p.g)} DEEP · CENTERED`,"vt","start");
+  }else if(p.kind==="tube"){
+    const s=Math.min(330/(p.L1+p.Rb+p.D/2),265/(p.L2+p.Rb+p.D));
+    const r=p.D/2*s,ri=(p.D/2-p.t)*s,Rb=p.Rb*s,xs=80,yc=80+(p.L2+p.Rb)*s+r,xt=xs+p.L1*s,Cy=yc-Rb,x2=xt+Rb,ye=Cy-p.L2*s;
+    const path=o=>`M${xs},${yc+o}H${xt}A${Rb+o},${Rb+o} 0 0 0 ${x2+o},${Cy}V${ye}`;
+    txt(xs,ye-12,"TOP","vt","start");
+    S.push(`<path class="fillp" d="M${xs},${yc+r}H${xt}A${Rb+r},${Rb+r} 0 0 0 ${x2+r},${Cy}V${ye}H${x2-r}V${Cy}A${Rb-r},${Rb-r} 0 0 1 ${xt},${yc-r}H${xs}Z"/>`);
+    S.push(`<path class="hid" d="${path(ri)}"/>`,`<path class="hid" d="${path(-ri)}"/>`,`<path class="ctr" d="M${xs-8},${yc}H${xt}A${Rb},${Rb} 0 0 0 ${x2},${Cy}V${ye-8}"/>`);
+    dimH(xs,xt,yc+r,yc+r+22,fmt(p.L1));dimV(ye,Cy,x2+r,x2+r+24,fmt(p.L2));
+    leader(xt+Rb*a,Cy+Rb*a,x2+r+34,yc+14,`CL R${fmt(p.Rb)}`);
+    const ex=x2+r+110+r,ey=Math.max(ye+r+36,120);
+    txt(ex-r,ey-r-30,"END","vt","start");
+    circ(ex,ey,r,"fillp");circ(ex,ey,ri);cross(ex,ey,r);
+    dimH(ex-r,ex+r,ey-r,ey-r-12,`Ø${fmt(p.D)}`);
+    txt(ex-r,ey+r+24,`WALL ${fmt(p.t)}`,"dt","start");
+    txt(ex-r,ey+r+46,"SWEEP ALONG CENTERLINE","vt","start");txt(ex-r,ey+r+60,"LEGS ARE STRAIGHT LENGTHS","vt","start");
+  }else if(p.kind==="gusset"){
+    const s=Math.min(440/p.L,220/(p.W+p.H));
+    const w=p.L*s,wd=p.W*s,x0=cx-w/2,y0=84,t=p.T*s,y1=y0+wd+60,yb=y1+p.H*s,hr=p.d/2*s,tr=p.tr*s,as=p.ga*s,bs=p.gb*s,xi=x0+w-t,cy0=y0+wd/2,hx=x0+p.px*s,hy=[y0+wd/4,y0+3*wd/4];
+    txt(x0,y0-48,"TOP","vt","start");txt(x0+60,y0-48,`RIB ${fmt(p.tr)} THICK, CENTERED · LEGS ${fmt(p.ga)} × ${fmt(p.gb)} FROM INSIDE CORNER`,"vt","start");
+    rect(x0,y0,w,wd);ln(xi,y0,xi,y0+wd);rect(xi-as,cy0-tr/2,as,tr);
+    hy.forEach(y=>{circ(hx,y,hr);cross(hx,y,hr)});
+    dimH(x0,hx,y0,y0-16,fmt(p.px));dimV(y0,y0+wd,x0,x0-40,fmt(p.W));dimV(y0,hy[0],x0,x0-18,fmt(p.W/4));
+    leader(hx+hr*a,hy[1]+hr*a,x0+w+30,y0+wd+18,`2× Ø${fmt(p.d)} THRU`);
+    txt(x0,y1-34,"FRONT","vt","start");
+    S.push(`<polygon class="fillp" points="${x0},${yb} ${x0+w},${yb} ${x0+w},${y1} ${xi},${y1} ${xi},${yb-t} ${x0},${yb-t}"/>`);
+    S.push(`<polygon class="fillp" points="${xi},${yb-t} ${xi-as},${yb-t} ${xi},${yb-t-bs}"/>`);
+    ln(hx-hr,yb-t,hx-hr,yb,"hid");ln(hx+hr,yb-t,hx+hr,yb,"hid");ln(hx,yb-t-6,hx,yb+6,"ctr");
+    dimH(x0,x0+w,yb,yb+22,fmt(p.L));dimV(y1,yb,x0+w,x0+w+24,fmt(p.H));
+    dimV(yb-t,yb,x0,x0-20,fmt(p.T));dimH(xi,x0+w,y1,y1-14,fmt(p.T));
+  }else if(p.kind==="canister"){
+    const s=Math.min(280/p.D,200/(p.D+p.H));
+    const R=p.D/2*s,ri=R-p.t*s,cy0=80+R,y1=80+2*R+60,hs=p.H*s,ts=p.t*s,rp=p.P/2*s,rh=p.dh/2*s,rc=p.dc/2*s;
+    txt(cx-R,64,"TOP","vt","start");
+    circ(cx,cy0,R,"fillp");circ(cx,cy0,ri,"fillp");circ(cx,cy0,rp,"ctr");
+    const hp=[];for(let k=0;k<p.N;k++){const an=-Math.PI/2+k*2*Math.PI/p.N;hp.push([cx+rp*Math.cos(an),cy0+rp*Math.sin(an)])}
+    hp.forEach(([x,y])=>circ(x,y,rh));circ(cx,cy0,rc);cross(cx,cy0,R);
+    const hk=hp.reduce((b,q)=>q[0]>b[0]+0.01?q:b);
+    leader(hk[0]+rh*a,hk[1]+rh*a,cx+R+40,cy0+R*0.45,`${p.N}× Ø${fmt(p.dh)} THRU FLOOR`);
+    txt(cx+R+58,cy0+R*0.45+18,`EQ SP ON Ø${fmt(p.P)} BC`,"dt","start");
+    leader(cx+rc*a,cy0-rc*a,cx+R+40,cy0-R+6,`Ø${fmt(p.dc)} THRU FLOOR`);
+    txt(cx-R,y1-40,"FRONT","vt","start");rect(cx-R,y1,2*R,hs);
+    ln(cx-ri,y1,cx-ri,y1+hs-ts,"hid");ln(cx+ri,y1,cx+ri,y1+hs-ts,"hid");ln(cx-ri,y1+hs-ts,cx+ri,y1+hs-ts,"hid");
+    [...new Set([...hp.map(q=>Math.round((q[0]-cx)*10)/10)])].forEach(dx=>{ln(cx+dx-rh,y1+hs-ts,cx+dx-rh,y1+hs,"hid");ln(cx+dx+rh,y1+hs-ts,cx+dx+rh,y1+hs,"hid")});
+    ln(cx-rc,y1+hs-ts,cx-rc,y1+hs,"hid");ln(cx+rc,y1+hs-ts,cx+rc,y1+hs,"hid");ln(cx,y1-10,cx,y1+hs+10,"ctr");
+    dimH(cx-R,cx+R,y1+hs,y1+hs+22,`Ø${fmt(p.D)}`);dimV(y1,y1+hs,cx+R,cx+R+26,fmt(p.H));dimV(y1+hs-ts,y1+hs,cx-R,cx-R-18,fmt(p.t));
+    txt(cx-R,y1+hs+46,`OPEN TOP · WALL AND FLOOR ${fmt(p.t)} THICK`,"vt","start");
+  }else if(p.kind==="fins"){
+    const s=Math.min(440/p.L,225/(p.W+p.tb+p.hf));
+    const w=p.L*s,h=p.W*s,x0=cx-w/2,y0=80,y1=y0+h+60,bs=p.tb*s,fs=p.hf*s,tfs=p.tf*s,pitch=(p.L-p.tf)/(p.N-1)*s;
+    const fx=[...Array(p.N)].map((_,i)=>x0+i*pitch);
+    txt(x0,y0-50,"TOP","vt","start");rect(x0,y0,w,h);fx.forEach(x=>rect(x,y0,tfs,h));
+    dimH(x0,x0+w,y0,y0-34,fmt(p.L));dimV(y0,y0+h,x0,x0-22,fmt(p.W));
+    txt(x0,y1-28,"FRONT","vt","start");rect(x0,y1+fs,w,bs);fx.forEach(x=>rect(x,y1,tfs,fs));
+    dimH(x0,x0+w,y1+fs+bs,y1+fs+bs+22,fmt(p.L));dimV(y1,y1+fs,x0+w,x0+w+24,fmt(p.hf));
+    dimV(y1+fs,y1+fs+bs,x0,x0-18,fmt(p.tb));dimH(x0,x0+tfs,y1,y1-12,fmt(p.tf));
+    txt(x0+44,y0-57,`${p.N} FINS EQUALLY SPACED · END FINS FLUSH · FINS FULL WIDTH`,"vt","start");
+  }else if(p.kind==="tbar"){
+    const s=Math.min(340/(p.L+p.bf),200/(p.bf+p.tf+p.hw));
+    const w=p.L*s,h=p.bf*s,H=(p.tf+p.hw)*s,x0=Math.max(70,cx-(w+50+h)/2),y0=85,cy0=y0+h/2,y1=y0+h+72,xr=x0+w+50,tfs=p.tf*s,tws=p.tw*s,hr=p.d/2*s,es=p.e*s,eds=p.ed*s;
+    const hx=[x0+es,x0+w-es],hy=[y0+eds,y0+h-eds];
+    txt(x0,y0-52,"TOP","vt","start");rect(x0,y0,w,h);ln(x0,cy0-tws/2,x0+w,cy0-tws/2,"hid");ln(x0,cy0+tws/2,x0+w,cy0+tws/2,"hid");
+    hx.forEach(x=>hy.forEach(y=>{circ(x,y,hr);cross(x,y,hr)}));
+    dimH(x0,x0+w,y0,y0-34,fmt(p.L));dimH(x0,x0+es,y0,y0-14,fmt(p.e));dimV(y0,y0+h,x0,x0-40,fmt(p.bf));dimV(y0,y0+eds,x0,x0-18,fmt(p.ed));
+    leader(hx[1]+hr*a,hy[0]-hr*a,x0+w+26,y0-8,`4× Ø${fmt(p.d)} THRU FLANGE`);
+    txt(x0,y1-10,"FRONT","vt","start");rect(x0,y1,w,H);ln(x0,y1+tfs,x0+w,y1+tfs);
+    hx.forEach(x=>{ln(x-hr,y1,x-hr,y1+tfs,"hid");ln(x+hr,y1,x+hr,y1+tfs,"hid")});
+    txt(xr,y1-30,"RIGHT","vt","start");
+    const wl=xr+h/2-tws/2,wr=xr+h/2+tws/2;
+    S.push(`<polygon class="fillp" points="${xr},${y1} ${xr+h},${y1} ${xr+h},${y1+tfs} ${wr},${y1+tfs} ${wr},${y1+H} ${wl},${y1+H} ${wl},${y1+tfs} ${xr},${y1+tfs}"/>`);
+    dimH(xr,xr+h,y1,y1-14,fmt(p.bf));dimV(y1,y1+tfs,xr+h,xr+h+20,fmt(p.tf));dimV(y1,y1+H,xr+h,xr+h+46,fmt(p.tf+p.hw));
+    dimH(wl,wr,y1+H,y1+H+18,fmt(p.tw));
+    txt(x0,y1+H+46,"WEB CENTERED UNDER FLANGE · HOLE PATTERN SYMMETRIC","vt","start");
+  }else if(p.kind==="pocket"){
+    const s=Math.min(440/p.L,235/(p.W+p.H));
+    const w=p.L*s,h=p.W*s,x0=cx-w/2,y0=80,hs=p.H*s,y1=y0+h+60,ms=p.m*s,rps=p.rp*s,dps=p.dp*s;
+    txt(x0,y0-50,"TOP","vt","start");rect(x0,y0,w,h);
+    S.push(`<rect class="ln" x="${x0+ms}" y="${y0+ms}" width="${w-2*ms}" height="${h-2*ms}" rx="${rps}"/>`);
+    dimH(x0,x0+w,y0,y0-34,fmt(p.L));dimV(y0,y0+h,x0,x0-22,fmt(p.W));dimH(x0,x0+ms,y0,y0-14,fmt(p.m));
+    leader(x0+w-ms-rps*(1-a),y0+ms+rps*(1-a),x0+w+30,y0-8,`POCKET CORNERS R${fmt(p.rp)}`);
+    txt(x0,y1-10,"FRONT","vt","start");rect(x0,y1,w,hs);
+    S.push(`<polyline class="hid" points="${x0+ms},${y1} ${x0+ms},${y1+dps} ${x0+w-ms},${y1+dps} ${x0+w-ms},${y1}"/>`);
+    dimV(y1,y1+hs,x0+w,x0+w+22,fmt(p.H));dimV(y1,y1+dps,x0+ms,x0-20,fmt(p.dp));
+    txt(x0,y1+hs+30,`POCKET CENTERED · WALL ${fmt(p.m)} ALL AROUND · ${fmt(p.dp)} DEEP`,"vt","start");
+  }else if(p.kind==="wedge"){
+    const s=Math.min(420/p.a,230/(p.W+p.b));
+    const w=p.a*s,Ws=p.W*s,bs=p.b*s,x0=cx-w/2,y0=80,y1=y0+Ws+60,r=p.d/2*s,xh=x0+p.xc*s,hAt=x=>bs*(1-(x-x0)/w);
+    txt(x0,y0-50,"TOP","vt","start");rect(x0,y0,w,Ws);circ(xh,y0+Ws/2,r);cross(xh,y0+Ws/2,r);
+    dimH(x0,x0+w,y0,y0-34,fmt(p.a));dimH(x0,xh,y0,y0-14,fmt(p.xc));dimV(y0,y0+Ws,x0,x0-22,fmt(p.W));
+    leader(xh+r*a,y0+Ws/2-r*a,x0+w+30,y0+6,`Ø${fmt(p.d)} THRU`);
+    txt(x0,y1-10,"FRONT","vt","start");
+    S.push(`<polygon class="fillp" points="${x0},${y1+bs} ${x0+w},${y1+bs} ${x0},${y1}"/>`);
+    ln(xh-r,y1+bs,xh-r,y1+bs-hAt(xh-r),"hid");ln(xh+r,y1+bs,xh+r,y1+bs-hAt(xh+r),"hid");ln(xh,y1+bs+6,xh,y1+bs-hAt(xh)-6,"ctr");
+    dimH(x0,x0+w,y1+bs,y1+bs+22,fmt(p.a));dimV(y1,y1+bs,x0,x0-22,fmt(p.b));
+    txt(x0+44,y0-57,"FLAT SLOPE FROM TOP OF TALL END TO THIN EDGE · HOLE VERTICAL, ON CENTERLINE","vt","start");
+  }else if(p.kind==="spring"){
+    const Lax=p.n*p.pt,s=Math.min(380/(Lax+p.d),170/(p.Dm+p.d)),Rm=p.Dm/2*s,ws=p.d*s,cy0=180,xs=Math.max(80,cx-(Lax*s+60+2*Rm)/2),xe=xs+Lax*s;
+    txt(xs-ws,cy0-Rm-44,"FRONT","vt","start");
+    const segs=[[],[]];let cur=[],side=null;
+    for(let i=0;i<=p.n*72;i++){const th=i/72*2*Math.PI,x=xs+p.pt*s*th/(2*Math.PI),y=cy0-Rm*Math.cos(th),f=Math.sin(th)>=0?1:0;
+      if(side!==null&&f!==side){cur.push([x,y]);segs[side].push(cur);cur=[]}side=f;cur.push([x,y])}
+    segs[side].push(cur);
+    const pl=pts=>pts.map(q=>q[0].toFixed(1)+","+q[1].toFixed(1)).join(" ");
+    segs[0].forEach(g=>S.push(`<polyline class="wireb" style="stroke-width:${ws}" points="${pl(g)}"/>`));
+    segs[1].forEach(g=>S.push(`<polyline class="wire" style="stroke-width:${ws}" points="${pl(g)}"/>`));
+    ln(xs-10,cy0,xe+10,cy0,"ctr");
+    dimV(cy0-Rm,cy0+Rm,xs,xs-26,`Ø${fmt(p.Dm)} MEAN`);
+    dimH(xs+p.pt*s,xs+2*p.pt*s,cy0-Rm-ws/2,cy0-Rm-22,`P ${fmt(p.pt)}`);
+    dimH(xs,xe,cy0+Rm+ws/2,cy0+Rm+30,fmt(Lax));
+    leader(xs+3*p.pt*s,cy0-Rm-ws/2,xs+3*p.pt*s+30,cy0-Rm-40,`Ø${fmt(p.d)} WIRE`);
+    const ex=xe+60+Rm;txt(ex-Rm,cy0-Rm-44,"END","vt","start");
+    S.push(`<circle class="wire" style="stroke-width:${ws}" cx="${ex}" cy="${cy0}" r="${Rm}"/>`);cross(ex,cy0,Rm);
+    txt(xs-ws,cy0+Rm+74,`HELIX ${p.n} TURNS · PITCH ${fmt(p.pt)} · MEAN Ø${fmt(p.Dm)}`,"vt","start");
+    txt(xs-ws,cy0+Rm+90,`SWEEP A Ø${fmt(p.d)} CIRCLE ALONG THE HELIX · DIMS TO WIRE CENTER`,"vt","start");
+  }else if(p.kind==="dome"){
+    const a2=p.Db/2,Rs=(a2*a2+p.hc*p.hc)/(2*p.hc),s=Math.min(280/p.Db,195/(p.Db+p.hb+p.hc));
+    const A=a2*s,cy0=80+A,y1=80+2*A+60,hbs=p.hb*s,hcs=p.hc*s,yb=y1+hcs+hbs,r=p.d/2*s,deps=p.dep*s;
+    txt(cx-A,64,"TOP","vt","start");circ(cx,cy0,A,"fillp");circ(cx,cy0,r,"hid");cross(cx,cy0,A);
+    txt(cx-A,y1-40,"FRONT","vt","start");
+    S.push(`<path class="fillp" d="M${cx-A},${yb}V${yb-hbs}A${Rs*s},${Rs*s} 0 0 1 ${cx+A},${yb-hbs}V${yb}Z"/>`);
+    ln(cx-A,yb-hbs,cx+A,yb-hbs);
+    S.push(`<polyline class="hid" points="${cx-r},${yb} ${cx-r},${yb-deps} ${cx+r},${yb-deps} ${cx+r},${yb}"/>`);ln(cx,y1-10,cx,yb+10,"ctr");
+    dimH(cx-A,cx+A,yb,yb+22,`Ø${fmt(p.Db)}`);dimV(yb-hbs,yb,cx+A,cx+A+22,fmt(p.hb));dimV(y1,yb,cx,cx+A+50,fmt(p.hb+p.hc),cx+A);
+    leader(cx-r,yb-deps*0.6,cx-A-40,yb-deps-18,"");txt(cx-A-40,yb-deps-22,`Ø${fmt(p.d)} × ${fmt(p.dep)} DEEP`,"dt","end");txt(cx-A-40,yb-deps-8,"FROM BOTTOM","dt","end");
+    txt(cx-A,yb+46,"SPHERICAL DOME THROUGH BASE EDGE AND TOP · FLAT-BOTTOM HOLE","vt","start");
+  }else if(p.kind==="draft"){
+    const tn=Math.tan(p.th*Math.PI/180),s=Math.min(440/p.L,230/(p.W+p.T+p.hb));
+    const w=p.L*s,h=p.W*s,x0=cx-w/2,y0=80,Ts=p.T*s,hbs=p.hb*s,Lbs=p.Lb*s,Wbs=p.Wb*s,e=p.hb*tn*s,bx=cx-Lbs/2,by=y0+h/2-Wbs/2,y1=y0+h+60,yb=y1+hbs+Ts;
+    txt(x0,y0-50,"TOP","vt","start");rect(x0,y0,w,h);rect(bx,by,Lbs,Wbs);rect(bx+e,by+e,Lbs-2*e,Wbs-2*e);
+    ln(bx,by,bx+e,by+e);ln(bx+Lbs,by,bx+Lbs-e,by+e);ln(bx,by+Wbs,bx+e,by+Wbs-e);ln(bx+Lbs,by+Wbs,bx+Lbs-e,by+Wbs-e);
+    dimH(x0,x0+w,y0,y0-34,fmt(p.L));dimH(bx,bx+Lbs,by,y0-14,fmt(p.Lb));dimV(y0,y0+h,x0,x0-40,fmt(p.W));dimV(by,by+Wbs,bx,x0-18,fmt(p.Wb));
+    txt(x0,y1-10,"FRONT","vt","start");rect(x0,yb-Ts,w,Ts);
+    S.push(`<polygon class="fillp" points="${bx},${yb-Ts} ${bx+Lbs},${yb-Ts} ${bx+Lbs-e},${yb-Ts-hbs} ${bx+e},${yb-Ts-hbs}"/>`);
+    dimV(yb-Ts,yb,x0+w,x0+w+22,fmt(p.T));dimV(yb-Ts-hbs,yb-Ts,bx+Lbs-e,x0+w+48,fmt(p.hb),bx+Lbs);
+    txt(x0+44,y0-57,`BOSS DRAFT ${p.th}° ON ALL 4 SIDES · BOSS CENTERED · ${fmt(p.Lb)} × ${fmt(p.Wb)} AT BASE`,"vt","start");
   }else{
     const s=Math.min(440/p.L,240/(p.W+p.H));
     const w=p.L*s,wd=p.W*s,x0=cx-w/2,y0=80,t=p.T*s,y1=y0+wd+60,yb=y1+p.H*s,hr=p.d/2*s;
@@ -621,11 +998,11 @@ function draw(p,n){
   S.push(`<rect class="frame" x="${bx}" y="${by}" width="${bw}" height="${bh}"/>`);
   S.push(`<rect class="tbband" x="${bx}" y="${by}" width="${bw}" height="34"/>`);
   ln(bx+150,by+34,bx+150,by+bh,"frame");ln(bx,by+57,bx+bw,by+57,"frame");
-  txt(bx+8,by+29,p.name,"tbb","start");txt(bx+bw-8,by+11,`${p.diff==="hard"?"HARD":"EASY"} · NO. ${String(n).padStart(3,"0")}`,"tbn","end");
+  txt(bx+8,by+29,p.name,"tbb","start");txt(bx+bw-8,by+11,`${p.diff==="hard"?"HARD":"EASY"} · NO. ${p.no}`,"tbn","end");
   txt(bx+8,by+44,"MATERIAL","tbl","start");txt(bx+8,by+54,p.mat.name,"tbt","start");
   txt(bx+158,by+44,"DENSITY","tbl","start");txt(bx+158,by+54,`${p.mat.rho.toFixed(2)} g/cm³`,"tbt","start");
   txt(bx+8,by+67,"UNITS","tbl","start");txt(bx+8,by+77,"MILLIMETERS","tbt","start");
-  txt(bx+158,by+67,"DATE","tbl","start");txt(bx+158,by+77,fmtDate(dateOf(n)).toUpperCase(),"tbt","start");
+  txt(bx+158,by+67,"DATE","tbl","start");txt(bx+158,by+77,p.dateText,"tbt","start");
   txt(24,484,"THIRD-ANGLE PROJECTION · DIMENSIONS IN MM · HIDDEN LINES DASHED","vt","start");
   return S.join("");
 }
@@ -654,36 +1031,39 @@ function nameProblem(n){
 
 // ---------- state ----------
 let cur=todayNum(),diff=store.get("caddle-diff","easy")==="hard"?"hard":"easy",playMode="daily",view="daily",part,st,timerId,nextId;
+let isBank=false; // true for practice-bank parts (Unlimited), which have no date or leaderboard
 const pid=()=>cur+(diff==="hard"?HARD:0);
+const keyOf=(n,d,bank)=>bank?`caddle-b${d==="hard"?"h":"e"}${n}`:"caddle-"+(n+(d==="hard"?HARD:0));
+const refLabel=(n,d,bank)=>bank?`Practice P${n} · ${DIFF(d)}`:`#${n} · ${DIFF(d)} · ${fmtDate(dateOf(n))}`;
 const DIFF=d=>d==="hard"?"Hard":"Easy";
 const titleCase=t=>t.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
 let software=store.get("caddle-sw","Onshape");
 {const n=store.get("caddle-name","");const ok=n&&!nameProblem(n)?n:"";$("pname").value=ok;if(ok!==n)store.set("caddle-name",ok)}
 
-function load(n,d=diff,mode=playMode){
-  cur=n;diff=d;playMode=mode;part=makePart(n,d);curveTimes=null;curveCounts=null;
-  st=store.get("caddle-"+pid(),{start:null,end:null,guesses:[],done:false,won:false,gaveUp:false,ranked:false,official:null,rank:null,total:null,sw:null});
+function load(n,d=diff,mode=playMode,bank=false){
+  cur=n;diff=d;playMode=mode;isBank=bank;part=makePart(n,d,bank);curveTimes=null;curveCounts=null;
+  st=store.get(keyOf(n,d,bank),{start:null,end:null,guesses:[],done:false,won:false,gaveUp:false,ranked:false,official:null,rank:null,total:null,sw:null});
   document.documentElement.style.setProperty("--hue",KIND[part.kind].hue);
   $("dwg").innerHTML=draw(part,n);
   $("kindPill").textContent=`${KIND[part.kind].emoji} ${part.name}`;
   $("dayLbl").textContent=`#${n} · ${fmtDate(dateOf(n))}`;
   $("prev").disabled=n<=1;$("next").disabled=n>=todayNum();
   document.querySelectorAll("#diffSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.d===d));
-  $("unlLbl").textContent=`#${n} · ${DIFF(d)} · ${fmtDate(dateOf(n))}`;
+  $("unlLbl").textContent=refLabel(n,d,bank);
   $("diffBadge").textContent=d.toUpperCase();$("diffBadge").className="badge "+d;
   $("skillChips").innerHTML="";
   SKILLS[part.kind].forEach(k=>{const b=document.createElement("button");b.textContent=k;b.title=SKILL_INFO[k];b.onclick=()=>setView("learn",k);$("skillChips").appendChild(b)});
   $("confirm").hidden=true;$("overlay").hidden=true;
   render();loadBoard();
 }
-function save(){store.set("caddle-"+pid(),st)}
-const isToday=()=>cur===todayNum();
+function save(){store.set(keyOf(cur,diff,isBank),st)}
+const isToday=()=>!isBank&&cur===todayNum();
 const elapsed=()=>st.official!=null?st.official*1000:((st.end||Date.now())-st.start);
 
 function render(){
   const started=!!st.start,live=started&&!st.done;
   $("veil").hidden=started;$("dwg").classList.toggle("veiled",!started);
-  $("veilTitle").textContent=isToday()?`Today's ${DIFF(diff)} part is hidden`:playMode==="unlimited"?"Archive puzzle":"Past puzzle";
+  $("veilTitle").textContent=isToday()?`Today's ${DIFF(diff)} part is hidden`:isBank?"Practice part":playMode==="unlimited"?"Archive puzzle":"Past puzzle";
   $("veilText").textContent=isToday()
     ?(ONLINE?"The clock starts when you reveal it, and you only get one ranked run per difficulty each day. Open your CAD program first.":"The clock starts when you reveal it. Open your CAD program first.")
     :playMode==="unlimited"?"Practice mode: you're timed, but it won't go on the leaderboard.":"This is an older part. You can play it for practice, but it won't be ranked.";
@@ -782,6 +1162,7 @@ let curveTimes=null,curveCounts=null;
 // plus a "didn't solve" block at the slow end for people who gave up or ran out of tries.
 function drawCurve(){
   const fig=$("mCurve"),svg=$("curveSvg"),cap=$("curveCap");
+  if(isBank){fig.hidden=true;return}
   const times=(curveTimes||[]).filter(t=>t>0);
   const you=st.won&&!st.dq?Math.floor(elapsed()/1000):null;
   const practice=!st.ranked;
@@ -840,7 +1221,7 @@ function closeModal(){$("overlay").hidden=true;if(lastFocus&&lastFocus.focus)las
 function shareText(){
   const squares=st.guesses.map(g=>SQ[band(Math.abs(g-part.mass)/part.mass)]).join("")+"⬜".repeat(MAX-st.guesses.length);
   const sec=Math.floor(elapsed()/1000),time=keycaps(mmss(elapsed()));
-  const lines=[`Caddle #${cur} ${DIFF(diff)} ${KIND[part.kind].emoji}`];
+  const lines=[isBank?`Caddle Practice P${cur} ${DIFF(diff)} ${KIND[part.kind].emoji}`:`Caddle #${cur} ${DIFF(diff)} ${KIND[part.kind].emoji}`];
   if(st.dq)lines.push(`🚫 ${time} disqualified`);
   else if(st.won)lines.push(`⏱️ ${time} ${speedTier(sec)}`);
   else if(st.gaveUp)lines.push(`🏳️ ${time}`);
@@ -864,6 +1245,7 @@ async function loadBoard(){
   $("boardTitle").textContent=`Leaderboard · #${cur} ${DIFF(diff)}`;
   ol.innerHTML="";
   if(!ONLINE){empty.textContent="The leaderboard isn't connected yet.";$("refreshBoard").hidden=true;return}
+  if(isBank){$("boardTitle").textContent="Leaderboard";empty.textContent="Practice parts don't have a leaderboard. Play daily to get ranked.";$("refreshBoard").hidden=true;return}
   $("refreshBoard").hidden=false;empty.textContent="Loading…";
   const n=pid();
   try{
@@ -998,19 +1380,26 @@ document.querySelectorAll("#diffSeg button").forEach(b=>b.onclick=()=>{store.set
 let unlFilter=store.get("caddle-unlf","any"),learnSel=null;
 function archive(filter){
   const out=[];
-  for(let n=1;n<todayNum();n++)for(const d of["easy","hard"]){
+  for(const d of["easy","hard"]){
     if(filter!=="any"&&filter!==d)continue;
-    const s=store.get("caddle-"+(n+(d==="hard"?HARD:0)),null);
-    if(!(s&&s.done))out.push([n,d]);
+    for(let n=1;n<todayNum();n++){const s=store.get(keyOf(n,d,false),null);if(!(s&&s.done))out.push([n,d,false])}
+    for(let n=1;n<=BANK[d];n++){const s=store.get(keyOf(n,d,true),null);if(!(s&&s.done))out.push([n,d,true])}
   }
   return out;
 }
-function updateLeft(){const k=archive(unlFilter).length;$("unlLeft").textContent=k?`${k} unplayed in the archive`:"You've played every archive puzzle here!"}
+function updateLeft(){const k=archive(unlFilter).length;$("unlLeft").textContent=k?`${k} unplayed parts`:"You've played every part here!"}
+let recentKinds=store.get("caddle-recent",[]);
 function newPuzzle(){
-  const pool=archive(unlFilter).filter(([n,d])=>!(playMode==="unlimited"&&n===cur&&d===diff));
+  let pool=archive(unlFilter).filter(([n,d,b])=>!(playMode==="unlimited"&&n===cur&&d===diff&&b===isBank));
   if(!pool.length){updateLeft();return false}
-  const [n,d]=pool[Math.floor(Math.random()*pool.length)];
-  store.set("caddle-unl",[n,d]);load(n,d,"unlimited");updateLeft();return true;
+  // pick a part type you haven't seen recently, then a random part of that type
+  const kinds=[...new Set(pool.map(([n,d,b])=>kindFor(n,d,b)))];
+  const fresh=kinds.filter(k=>!recentKinds.includes(k)),pickFrom=fresh.length?fresh:kinds;
+  const kind=pickFrom[Math.floor(Math.random()*pickFrom.length)];
+  pool=pool.filter(([n,d,b])=>kindFor(n,d,b)===kind);
+  const [n,d,b]=pool[Math.floor(Math.random()*pool.length)];
+  recentKinds=[kind,...recentKinds.filter(k=>k!==kind)].slice(0,8);store.set("caddle-recent",recentKinds);
+  store.set("caddle-unl",[n,d,b]);load(n,d,"unlimited",b);updateLeft();return true;
 }
 function setView(v,arg){
   view=v;
@@ -1020,26 +1409,27 @@ function setView(v,arg){
   if(v==="daily"&&playMode!=="daily")load(todayNum(),diff,"daily");
   if(v==="unlimited"){
     document.querySelectorAll("#unlSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.d===unlFilter));
-    if(arg){store.set("caddle-unl",arg);load(arg[0],arg[1],"unlimited")}
+    if(arg){store.set("caddle-unl",arg);load(arg[0],arg[1],"unlimited",!!arg[2])}
     else if(playMode!=="unlimited"){
-      const last=store.get("caddle-unl",null),ls=last&&store.get("caddle-"+(last[0]+(last[1]==="hard"?HARD:0)),null);
-      if(last&&last[0]<todayNum()&&!(ls&&ls.done))load(last[0],last[1],"unlimited");
-      else if(!newPuzzle()&&todayNum()>1)load(todayNum()-1,"easy","unlimited");
+      const last=store.get("caddle-unl",null),ls=last&&store.get(keyOf(last[0],last[1],!!last[2]),null);
+      if(last&&(last[2]||last[0]<todayNum())&&!(ls&&ls.done))load(last[0],last[1],"unlimited",!!last[2]);
+      else if(!newPuzzle())load(1,"easy","unlimited",true);
     }
     updateLeft();
   }
   if(v==="learn")renderLearn(arg||learnSel);
   try{history.replaceState(null,"","#"+v)}catch(e){}
 }
-function openPuzzle(n,d){
-  if(n===todayNum()){setView("daily");store.set("caddle-diff",d);load(n,d,"daily")}
-  else setView("unlimited",[n,d]);
+function openPuzzle(n,d,bank){
+  if(!bank&&n===todayNum()){setView("daily");store.set("caddle-diff",d);load(n,d,"daily")}
+  else setView("unlimited",[n,d,!!bank]);
   window.scrollTo(0,0);
 }
 let puzCache=null;
 function allPuzzles(){
   if(puzCache&&puzCache.day===todayNum())return puzCache.list;
-  const list=[];for(let n=todayNum();n>=1;n--)for(const d of["easy","hard"])list.push({n,d,p:makePart(n,d)});
+  const list=[];for(let n=todayNum();n>=1;n--)for(const d of["easy","hard"])list.push({n,d,bank:false,p:makePart(n,d)});
+  for(const d of["easy","hard"])for(let n=1;n<=BANK[d];n++)list.push({n,d,bank:true,p:makePart(n,d,true)});
   puzCache={day:todayNum(),list};return list;
 }
 function renderLearn(sel){
@@ -1059,13 +1449,13 @@ function renderLearn(sel){
   if(!learnSel){$("skName").textContent="Pick a tool";$("skDesc").textContent="Choose a tool to see what it does and every puzzle that uses it.";return}
   $("skName").textContent=learnSel;$("skDesc").textContent=SKILL_INFO[learnSel];
   list.filter(x=>SKILLS[x.p.kind].includes(learnSel)).forEach(x=>{
-    const s=store.get("caddle-"+(x.n+(x.d==="hard"?HARD:0)),null);
+    const s=store.get(keyOf(x.n,x.d,x.bank),null);
     const li=document.createElement("li"),b=document.createElement("button");
-    const pn=document.createElement("span");pn.className="pn";pn.textContent=`#${x.n}`;
-    const pt=document.createElement("span");pt.className="pt";pt.textContent=`${DIFF(x.d)} · ${titleCase(x.p.name)} · ${fmtDate(dateOf(x.n))}`;
+    const pn=document.createElement("span");pn.className="pn";pn.textContent=x.bank?`P${x.n}`:`#${x.n}`;
+    const pt=document.createElement("span");pt.className="pt";pt.textContent=`${DIFF(x.d)} · ${titleCase(x.p.name)} · ${x.bank?"Practice":fmtDate(dateOf(x.n))}`;
     const ps=document.createElement("span");ps.className="ps";
     if(s&&s.done&&s.won){ps.textContent="✓ Solved";ps.classList.add("done")}else if(s&&s.done)ps.textContent="Played";else ps.textContent=x.n===todayNum()?"Today":"New";
-    b.append(pn,pt,ps);b.onclick=()=>openPuzzle(x.n,x.d);li.appendChild(b);ol.appendChild(li);
+    b.append(pn,pt,ps);b.onclick=()=>openPuzzle(x.n,x.d,x.bank);li.appendChild(b);ol.appendChild(li);
   });
 }
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>setView(b.dataset.view));
