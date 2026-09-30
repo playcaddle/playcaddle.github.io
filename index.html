@@ -4,9 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Caddle</title>
-<meta name="description" content="Caddle: a daily CAD speed-modeling puzzle. Model the part in Onshape, Fusion, or SOLIDWORKS, enter the mass, and race the leaderboard.">
-<meta property="og:title" content="Caddle">
-<meta property="og:description" content="One part a day. Model it in any CAD program, enter the mass, race the leaderboard.">
+<meta name="description" content="Caddle is a daily CAD speed-modeling game. Get an Easy and a Hard drawing every day, model it in Onshape, Fusion, or SOLIDWORKS, enter the mass, and race the leaderboard.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://playcaddle.github.io/">
+<meta property="og:site_name" content="Caddle">
+<meta property="og:title" content="Caddle: the daily CAD speed-modeling game">
+<meta property="og:description" content="An Easy and a Hard part every day. Model it in any CAD program, enter the mass, race the leaderboard.">
+<meta property="og:image" content="https://playcaddle.github.io/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Caddle logo next to an engineering drawing of a bolted hub">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Caddle: the daily CAD speed-modeling game">
+<meta name="twitter:description" content="An Easy and a Hard part every day. Model it in any CAD program, enter the mass, race the leaderboard.">
+<meta name="twitter:image" content="https://playcaddle.github.io/og.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23ff7a2f'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='white' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='3' fill='white'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -352,7 +363,7 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
       <div class="card help">
         <div class="eyebrow" id="helpTitle">Getting mass in Onshape</div>
         <ol id="helpSteps"></ol>
-        <p>Check that the mass is shown in grams, not kilograms or pounds.</p>
+        <p>Check that the mass is shown in grams. If your program lists density in kg/m³, multiply the title-block value by 1000.</p>
       </div>
     </div>
   </div>
@@ -427,7 +438,7 @@ const SKILL_INFO={
 const HELP = {
   Onshape:["Right-click the part in the parts list and choose Assign material.","Pick Custom and enter the density from the title block (g/cm³).","Open Mass properties from the right-side panel and read the mass."],
   Fusion:["Right-click the body in the browser and choose Physical Material.","Duplicate a material and set its density to the title-block value.","Right-click the body, choose Properties, and read the mass."],
-  SOLIDWORKS:["Right-click Material in the feature tree and choose Edit Material.","Create a custom material with the title-block density.","Go to Evaluate › Mass Properties and read the mass."],
+  SOLIDWORKS:["Right-click Material in the feature tree and choose Edit Material.","Copy a library material into Custom Materials and set Mass Density. SOLIDWORKS uses kg/m³, so 1.04 g/cm³ is 1040.","Go to Evaluate › Mass Properties and read the mass. If it isn't in grams, click Options › Use custom settings."],
   Other:["Set the part's density to the title-block value.","Open your program's mass or physical properties tool.","Or read the volume in mm³ and multiply: mass (g) = volume ÷ 1000 × density."]
 };
 
@@ -1076,7 +1087,6 @@ $("copy").onclick=()=>{
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&playMode==="daily"&&cur===todayNum()-1&&st.done)load(todayNum(),diff,"daily")});
 
 if(ONLINE){const d=new Date().toDateString();if(store.get("caddle-visit","")!==d){rpc("log_visit",{p_player:player}).then(()=>store.set("caddle-visit",d)).catch(()=>{})}}
-window.__caddle={makePart,keycaps,mmss};
 load(todayNum(),diff,"daily");
 {const hv=location.hash.slice(1);setView(["daily","unlimited","learn"].includes(hv)?hv:"daily")}
 })();
