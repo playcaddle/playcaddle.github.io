@@ -228,6 +228,7 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
 .cv-youdot{fill:var(--accent);stroke:var(--sheet);stroke-width:2}
 .cv-lbl{fill:var(--ink);font-family:var(--f-mono);font-size:10.5px;font-weight:500}
 .modal .wide{width:100%;padding:11px}
+.modal .plaincopy{display:block;margin:6px auto 0;font-size:.8rem;padding:5px 12px}
 .modal .tomorrow{display:grid;gap:2px;padding-top:10px;border-top:1px solid var(--rule)}
 .modal .tomorrow b{font-family:var(--f-display);font-size:1.25rem}
 .zoomhint{display:none;text-align:center;font-size:.8rem;color:var(--muted);padding:2px 8px 10px;cursor:pointer}
@@ -421,6 +422,7 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
     <div class="skills"><div class="eyebrow">Skills covered</div><div class="chips" id="mSkills"></div></div>
     <pre class="share" id="shareText"></pre>
     <button class="primary wide" id="copy">Copy result</button>
+    <button class="ghost plaincopy" id="copyPlain">Copy without emoji</button>
     <div class="stats">
       <div><b id="stPlayed">0</b><span>played</span></div>
       <div><b id="stWon">0</b><span>solved</span></div>
@@ -1600,6 +1602,20 @@ function shareText(){
   lines.push(SITE);
   return lines.join("\n");
 }
+// Same result as shareText(), but plain text only (some Discord servers auto-moderate emoji spam)
+function shareTextPlain(){
+  const sec=Math.floor(elapsed()/1000),time=mmss(elapsed());
+  const lines=[isBank?`Caddle Practice P${cur} ${DIFF(diff)}`:`Caddle #${cur} ${DIFF(diff)}`];
+  if(st.dq)lines.push(`${time}, disqualified`);
+  else if(st.won)lines.push(`Solved in ${time} on try ${st.guesses.length}/${MAX}`);
+  else if(st.gaveUp)lines.push(`Gave up after ${time} (${st.guesses.length}/${MAX} tries)`);
+  else lines.push(`Missed: ${MAX}/${MAX} tries, ${time}`);
+  if(st.won&&st.ranked&&st.rank){const pl=st.played||st.total;lines.push(`${ordinal(st.rank)} of ${pl}`+(st.played>1?`, beat ${beatPct()}%`:""))}
+  else if(!st.ranked&&!st.dq)lines.push("Practice");
+  lines.push(`CAD: ${st.sw||software}`);
+  lines.push(SITE);
+  return lines.join("\n");
+}
 function stats(){
   let played=0,won=0,best=0;
   for(let i=1;i<=todayNum();i++)for(const k of [i,i+HARD]){const s=store.get("caddle-"+k,null);if(s&&s.done){played++;if(s.won){won++;const t=s.official!=null?s.official*1000:s.end-s.start;if(!best||t<best)best=t}}}
@@ -1861,6 +1877,13 @@ $("copy").onclick=()=>{
   const t=shareText();
   const ok=()=>{$("copy").textContent="Copied";setTimeout(()=>$("copy").textContent="Copy result",1500)};
   const fb=()=>{const r=document.createRange();r.selectNodeContents($("shareText"));const s=getSelection();s.removeAllRanges();s.addRange(r);$("copy").textContent="Selected, press Ctrl+C"};
+  try{navigator.clipboard.writeText(t).then(ok,fb)}catch(e){fb()}
+};
+$("copyPlain").onclick=()=>{
+  logEvent("share",playRef());
+  const t=shareTextPlain(),b=$("copyPlain");
+  const ok=()=>{b.textContent="Copied";setTimeout(()=>b.textContent="Copy without emoji",1500)};
+  const fb=()=>{$("shareText").textContent=t;const r=document.createRange();r.selectNodeContents($("shareText"));const s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent="Selected, press Ctrl+C"};
   try{navigator.clipboard.writeText(t).then(ok,fb)}catch(e){fb()}
 };
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&playMode==="daily"&&cur===todayNum()-1&&st.done)load(todayNum(),diff,"daily")});
