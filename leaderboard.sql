@@ -272,3 +272,46 @@ select d.day,
 from (select generate_series(date '2026-09-01', current_date, '1 day')::date as day) d
 order by d.day desc;
 revoke all on public.usage_by_day from anon, authenticated;
+
+-- ===== Completions and unique visitors by period (Pacific time) =====
+-- select * from usage_periods;   -> Today / This week / This month / This year / All time
+-- select * from usage_history;   -> every day, week, month, and year so far
+create or replace view public.usage_activity with (security_invoker = true) as
+  select player, day as d from visits
+  union all select player, (at at time zone 'America/Los_Angeles')::date from events
+  union all select player, (started_at at time zone 'America/Los_Angeles')::date from attempts;
+
+create or replace view public.usage_periods with (security_invoker = true) as
+with t as (select (now() at time zone 'America/Los_Angeles')::date as today),
+p(sort, period, since) as (
+  select 1, 'Today',      today                              from t union all
+  select 2, 'This week',  date_trunc('week',  today)::date   from t union all
+  select 3, 'This month', date_trunc('month', today)::date   from t union all
+  select 4, 'This year',  date_trunc('year',  today)::date   from t union all
+  select 5, 'All time',   date '2026-09-01'                  from t
+)
+select p.period, p.since,
+  (select count(*) from attempts where finished_at is not null and (finished_at at time zone 'America/Los_Angeles')::date >= p.since)
+  + (select count(*) from events where kind = 'practice_finish' and (at at time zone 'America/Los_Angeles')::date >= p.since) as completions,
+  (select count(*) from attempts where solved and (finished_at at time zone 'America/Los_Angeles')::date >= p.since)
+  + (select count(*) from events where kind = 'practice_solve' and (at at time zone 'America/Los_Angeles')::date >= p.since) as solves,
+  (select count(distinct player) from usage_activity a where a.d >= p.since) as unique_visitors
+from p order by p.sort;
+
+create or replace view public.usage_history with (security_invoker = true) as
+with fin as (
+  select (finished_at at time zone 'America/Los_Angeles')::date as d, solved from attempts where finished_at is not null
+  union all select (at at time zone 'America/Los_Angeles')::date, false from events where kind = 'practice_finish'
+), sol as (
+  select (finished_at at time zone 'America/Los_Angeles')::date as d from attempts where solved
+  union all select (at at time zone 'America/Los_Angeles')::date from events where kind = 'practice_solve'
+), g(grain, ord, unit) as (values ('day',1,'day'),('week',2,'week'),('month',3,'month'),('year',4,'year'))
+select g.grain, s.start,
+  (select count(*) from fin where date_trunc(g.unit, fin.d)::date = s.start) as completions,
+  (select count(*) from sol where date_trunc(g.unit, sol.d)::date = s.start) as solves,
+  (select count(distinct player) from usage_activity a where date_trunc(g.unit, a.d)::date = s.start) as unique_visitors
+from g
+cross join lateral (select distinct date_trunc(g.unit, d)::date as start from usage_activity) s
+order by g.ord, s.start desc;
+
+revoke all on public.usage_activity, public.usage_periods, public.usage_history from anon, authenticated;
