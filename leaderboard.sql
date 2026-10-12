@@ -197,3 +197,78 @@ order by d.day desc;
 revoke all on public.daily_stats from anon, authenticated;
 revoke execute on function public.start_attempt(int, uuid, text, text) from public;
 grant  execute on function public.start_attempt(int, uuid, text, text) to anon, authenticated;
+
+-- ===== Usage tracking: every play counts, not just ranked runs =====
+-- Anonymous: a random device ID only. No names, emails, or IP addresses.
+
+create table if not exists public.events (
+  id     bigint generated always as identity primary key,
+  at     timestamptz not null default now(),
+  player uuid not null,
+  kind   text not null check (kind in ('session','practice_start','practice_finish','practice_solve','share','learn')),
+  ref    text check (char_length(ref) <= 24),
+  secs   int  check (secs between 0 and 86400)
+);
+create index if not exists events_player_at on public.events (player, at);
+create index if not exists events_kind on public.events (kind);
+alter table public.events enable row level security;
+revoke all on table public.events from anon, authenticated;
+
+create or replace function public.log_event(p_player uuid, p_kind text, p_ref text default null, p_secs int default null)
+returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if p_kind not in ('session','practice_start','practice_finish','practice_solve','share','learn') then return; end if;
+  -- flood guard: one device can't log more than 300 events a day
+  if (select count(*) from events where player = p_player and at > now() - interval '1 day') >= 300 then return; end if;
+  insert into events (player, kind, ref, secs)
+  values (p_player, p_kind, left(p_ref, 24), case when p_secs between 0 and 86400 then p_secs end);
+end $$;
+
+-- Real totals for the on-site counter: everyone who has used the site, every finished and solved puzzle
+create or replace function public.get_public_stats()
+returns table (players bigint, played bigint, solved bigint)
+language sql stable security definer set search_path = public as $$
+  select
+    (select count(distinct p) from (select player as p from visits union select player from attempts union select player from events) u),
+    (select count(*) from attempts where finished_at is not null) + (select count(*) from events where kind = 'practice_finish'),
+    (select count(*) from attempts where solved) + (select count(*) from events where kind = 'practice_solve');
+$$;
+
+revoke execute on function public.log_event(uuid, text, text, int) from public;
+revoke execute on function public.get_public_stats() from public;
+grant  execute on function public.log_event(uuid, text, text, int) to anon, authenticated;
+grant  execute on function public.get_public_stats() to anon, authenticated;
+
+-- Your headline numbers:   select * from usage_summary;
+-- Modeling time counts each run up to 2 hours, so a tab left open overnight doesn't pad it.
+create or replace view public.usage_summary with (security_invoker = true) as
+select
+  (select count(distinct p) from (select player as p from visits union select player from attempts union select player from events) u) as unique_players,
+  (select count(*) from visits)                                                          as daily_visits,
+  (select count(*) from events where kind = 'session')                                   as sessions,
+  (select count(*) from attempts) + (select count(*) from events where kind = 'practice_start')                          as puzzles_started,
+  (select count(*) from attempts where finished_at is not null) + (select count(*) from events where kind = 'practice_finish') as puzzles_finished,
+  (select count(*) from attempts where solved) + (select count(*) from events where kind = 'practice_solve')            as puzzles_solved,
+  (select count(*) from attempts where solved)                                           as ranked_solves,
+  round(((select coalesce(sum(least(extract(epoch from finished_at - started_at), 7200)), 0) from attempts where finished_at is not null)
+       + (select coalesce(sum(least(secs, 7200)), 0) from events where kind = 'practice_finish')) / 3600.0, 1) as hours_of_modeling,
+  (select count(*) from events where kind = 'share')                                     as results_shared,
+  (select count(*) from events where kind = 'learn')                                     as learn_page_visits,
+  (select min(day) from visits)                                                          as first_day;
+revoke all on public.usage_summary from anon, authenticated;
+
+-- Day by day, everything included:   select * from usage_by_day;
+create or replace view public.usage_by_day with (security_invoker = true) as
+select d.day,
+       (select count(distinct p) from (select player as p from visits where day = d.day
+                                       union select player from events where at::date = d.day
+                                       union select player from attempts where started_at::date = d.day) u) as active_players,
+       (select count(*) from events where kind = 'session' and at::date = d.day) as sessions,
+       (select count(*) from attempts where started_at::date = d.day and finished_at is not null)
+         + (select count(*) from events where kind = 'practice_finish' and at::date = d.day) as puzzles_finished,
+       (select count(*) from attempts where started_at::date = d.day and solved)
+         + (select count(*) from events where kind = 'practice_solve' and at::date = d.day) as puzzles_solved
+from (select generate_series(date '2026-09-01', current_date, '1 day')::date as day) d
+order by d.day desc;
+revoke all on public.usage_by_day from anon, authenticated;

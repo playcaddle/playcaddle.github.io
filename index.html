@@ -64,6 +64,8 @@ header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-be
 .logo span:nth-child(5){background:var(--bush)}
 .logo span:nth-child(6){background:var(--brak)}
 .tag{margin:8px 0 0;color:var(--muted);max-width:56ch}
+.live{margin:6px 0 0;font-family:var(--f-mono);font-size:.82rem;color:var(--good);font-variant-numeric:tabular-nums}
+.live::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);margin-right:7px;vertical-align:1px}
 .tabs{display:flex;gap:4px;padding:4px;border-radius:12px;background:var(--sheet);border:1px solid var(--rule)}
 .tabs button{border:none;background:transparent;padding:9px 16px;border-radius:9px;font-family:var(--f-display);font-weight:700;font-size:1.1rem;letter-spacing:.02em;color:var(--muted)}
 .tabs button[aria-selected="true"]{background:var(--ink);color:var(--sheet)}
@@ -231,6 +233,7 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
     <div>
       <h1 class="logo" aria-label="Caddle"><span>C</span><span>A</span><span>D</span><span>D</span><span>L</span><span>E</span></h1>
       <p class="tag">An Easy and a Hard part every day. Model it in any CAD program, enter the mass in grams, and race the leaderboard.</p>
+      <p class="live" id="liveStats" hidden></p>
     </div>
     <div class="tabs" role="tablist" aria-label="Game modes">
       <button role="tab" id="tab-daily" data-view="daily" aria-selected="true">Play daily</button>
@@ -517,6 +520,10 @@ async function rpc(fn,body){
   if(!r.ok)throw new Error(txt);
   return txt?JSON.parse(txt):null;
 }
+
+// ---------- usage logging (anonymous device ID only; never blocks the game) ----------
+const logEvent=(kind,ref=null,secs=null)=>{if(ONLINE)rpc("log_event",{p_player:player,p_kind:kind,p_ref:ref,p_secs:secs==null?null:Math.round(secs)}).catch(()=>{})};
+function touchSession(){const now=Date.now(),last=store.get("caddle-active",0);if(now-last>30*60*1000)logEvent("session");store.set("caddle-active",now)}
 
 // ---------- dates ----------
 function todayNum(){const t=new Date();const a=new Date(t.getFullYear(),t.getMonth(),t.getDate());return Math.round((a-EPOCH)/86400000)+1}
@@ -1308,6 +1315,7 @@ function confetti(){
 }
 
 // ---------- actions ----------
+const playRef=()=>`${isBank?"b":"d"}${diff==="hard"?"h":"e"}${cur}`;
 async function finish(won,gaveUp){
   st.done=true;st.gaveUp=gaveUp;st.end=Date.now();st.sw=software;
   // A solve faster than MIN_SECS is impossible by hand, so it's disqualified
@@ -1316,6 +1324,8 @@ async function finish(won,gaveUp){
   save();render();
   if(st.won)confetti();
   setTimeout(openModal,st.won?650:250);
+  if(!st.ranked){const secs=(st.end-st.start)/1000;logEvent("practice_finish",playRef(),secs);if(st.won)logEvent("practice_solve",playRef(),secs)}
+  touchSession();
   if(st.ranked){
     try{
       const secs=await rpc("finish_attempt",{p_puzzle:pid(),p_player:player,p_tries:Math.max(1,st.guesses.length),p_solved:won,p_gave_up:gaveUp,p_software:software});
@@ -1338,6 +1348,8 @@ $("reveal").onclick=async()=>{
     }catch(e){$("msg").textContent="Couldn't reach the leaderboard, so this run is practice only."}
     render();
   }
+  if(!st.ranked)logEvent("practice_start",playRef());
+  touchSession();
 };
 $("form").addEventListener("submit",e=>{
   e.preventDefault();if(st.done||!st.start)return;
@@ -1377,7 +1389,7 @@ $("next").onclick=()=>cur<todayNum()&&load(cur+1,diff,"daily");
 document.querySelectorAll("#diffSeg button").forEach(b=>b.onclick=()=>{store.set("caddle-diff",b.dataset.d);load(cur,b.dataset.d,"daily")});
 
 // ---------- tabs: daily / unlimited / learn ----------
-let unlFilter=store.get("caddle-unlf","any"),learnSel=null;
+let unlFilter=store.get("caddle-unlf","any"),learnSel=null,learnLogged=false;
 function archive(filter){
   const out=[];
   for(const d of["easy","hard"]){
@@ -1417,7 +1429,7 @@ function setView(v,arg){
     }
     updateLeft();
   }
-  if(v==="learn")renderLearn(arg||learnSel);
+  if(v==="learn"){renderLearn(arg||learnSel);if(!learnLogged){learnLogged=true;logEvent("learn")}}
   try{history.replaceState(null,"","#"+v)}catch(e){}
 }
 function openPuzzle(n,d,bank){
@@ -1469,6 +1481,7 @@ $("closeRes").onclick=closeModal;
 $("overlay").addEventListener("click",e=>{if(e.target===$("overlay"))closeModal()});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("overlay").hidden)closeModal()});
 $("copy").onclick=()=>{
+  logEvent("share",playRef());
   const t=shareText();
   const ok=()=>{$("copy").textContent="Copied";setTimeout(()=>$("copy").textContent="Copy result",1500)};
   const fb=()=>{const r=document.createRange();r.selectNodeContents($("shareText"));const s=getSelection();s.removeAllRanges();s.addRange(r);$("copy").textContent="Selected, press Ctrl+C"};
@@ -1477,6 +1490,12 @@ $("copy").onclick=()=>{
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&playMode==="daily"&&cur===todayNum()-1&&st.done)load(todayNum(),diff,"daily")});
 
 if(ONLINE){const d=new Date().toDateString();if(store.get("caddle-visit","")!==d){rpc("log_visit",{p_player:player}).then(()=>store.set("caddle-visit",d)).catch(()=>{})}}
+touchSession();
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)touchSession()});
+// Public counter: real totals, shown once there are enough plays to look lively
+const SHOW_STATS_AT=100;
+if(ONLINE)rpc("get_public_stats",{}).then(r=>{const c=r&&r[0];if(!c||c.played<SHOW_STATS_AT)return;
+  const f=n=>Number(n).toLocaleString();$("liveStats").textContent=`${f(c.played)} puzzles played · ${f(c.solved)} solved · ${f(c.players)} players`;$("liveStats").hidden=false}).catch(()=>{});
 load(todayNum(),diff,"daily");
 {const hv=location.hash.slice(1);setView(["daily","unlimited","learn"].includes(hv)?hv:"daily")}
 })();
