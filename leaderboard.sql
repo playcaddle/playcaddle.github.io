@@ -315,3 +315,61 @@ cross join lateral (select distinct date_trunc(g.unit, d)::date as start from us
 order by g.ord, s.start desc;
 
 revoke all on public.usage_activity, public.usage_periods, public.usage_history from anon, authenticated;
+
+-- ===== Every play, broken down by mode and result (Pacific time) =====
+-- select * from play_totals;                       -> all time, one row per mode + ALL
+-- select * from play_stats where day = current_date; -> one day, one row per mode + ALL
+-- select * from play_stats;                         -> every day
+
+-- One row per puzzle run: ranked daily runs + every practice/unlimited run
+create or replace view public.play_log with (security_invoker = true) as
+select (a.started_at at time zone 'America/Los_Angeles')::date as day,
+       case when a.puzzle >= 10000 then 'Daily Hard (ranked)' else 'Daily Easy (ranked)' end as mode,
+       case when a.finished_at is null then 'unfinished'
+            when a.solved then 'solved'
+            when a.gave_up then 'gave up'
+            when a.finished_at - a.started_at < interval '20 seconds' then 'disqualified'
+            else 'out of tries' end as result,
+       a.player,
+       a.started_at as at
+from attempts a
+union all
+select (s.at at time zone 'America/Los_Angeles')::date,
+       case left(s.ref, 1) when 'd' then 'Daily ' else 'Unlimited ' end
+         || case substr(s.ref, 2, 1) when 'h' then 'Hard' else 'Easy' end
+         || case left(s.ref, 1) when 'd' then ' (unranked)' else '' end,
+       case when exists (select 1 from events f where f.kind = 'practice_solve'  and f.player = s.player and f.ref = s.ref and f.at >= s.at) then 'solved'
+            when exists (select 1 from events f where f.kind = 'practice_finish' and f.player = s.player and f.ref = s.ref and f.at >= s.at) then 'not solved'
+            else 'unfinished' end,
+       s.player,
+       s.at
+from events s
+where s.kind = 'practice_start';
+
+-- Per day and mode, plus an ALL row for each day
+create or replace view public.play_stats with (security_invoker = true) as
+select day,
+       coalesce(mode, 'ALL') as mode,
+       count(*)                                                        as attempts,
+       count(*) filter (where result = 'solved')                       as solved,
+       count(*) filter (where result in ('gave up','out of tries','not solved','disqualified')) as not_solved,
+       count(*) filter (where result = 'unfinished')                   as unfinished,
+       count(distinct player)                                          as players
+from play_log
+group by grouping sets ((day, mode), (day))
+order by day desc, (mode is null), mode;
+
+-- All time, per mode, plus ALL
+create or replace view public.play_totals with (security_invoker = true) as
+select coalesce(mode, 'ALL') as mode,
+       count(*)                                                        as attempts,
+       count(*) filter (where result = 'solved')                       as solved,
+       count(*) filter (where result in ('gave up','out of tries','not solved','disqualified')) as not_solved,
+       count(*) filter (where result = 'unfinished')                   as unfinished,
+       round(100.0 * count(*) filter (where result = 'solved') / nullif(count(*), 0)) as solve_rate_pct,
+       count(distinct player)                                          as players
+from play_log
+group by grouping sets ((mode), ())
+order by (mode is null), mode;
+
+revoke all on public.play_log, public.play_stats, public.play_totals from anon, authenticated;

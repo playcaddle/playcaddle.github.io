@@ -1694,7 +1694,8 @@ function confetti(){
 }
 
 // ---------- actions ----------
-const playRef=()=>`${isBank?"b":"d"}${diff==="hard"?"h":"e"}${cur}`;
+// b = Unlimited practice part, u = Unlimited archive daily, d = unranked daily (Daily tab). Then e/h, then the number.
+const playRef=()=>`${isBank?"b":playMode==="unlimited"?"u":"d"}${diff==="hard"?"h":"e"}${cur}`;
 async function finish(won,gaveUp){
   st.done=true;st.gaveUp=gaveUp;st.end=Date.now();st.sw=software;
   // A solve faster than MIN_SECS is impossible by hand, so it's disqualified
