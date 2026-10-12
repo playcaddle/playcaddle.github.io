@@ -424,9 +424,9 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
     <button class="primary wide" id="copy">Copy result</button>
     <button class="ghost plaincopy" id="copyPlain">Copy without emoji</button>
     <div class="stats">
-      <div><b id="stPlayed">0</b><span>played</span></div>
-      <div><b id="stWon">0</b><span>solved</span></div>
-      <div><b id="stBest">–</b><span>best time</span></div>
+      <div><b id="stPlayed">0</b><span id="stPlayedL">played</span></div>
+      <div><b id="stWon">0</b><span id="stWonL">solved</span></div>
+      <div><b id="stBest">–</b><span id="stBestL">best time</span></div>
     </div>
     <div class="tomorrow"><b id="mTomorrow">Come back tomorrow!</b><span class="next" id="nextIn"></span><button class="primary wide" id="mNext" hidden>New puzzle</button></div>
   </div>
@@ -1478,7 +1478,7 @@ function render(){
     $("resBody").textContent=body;
     $("shareText").textContent=shareText();
     fillModal();
-    const all=stats();$("stPlayed").textContent=all.played;$("stWon").textContent=all.won;$("stBest").textContent=all.best?mmss(all.best):"–";
+    const all=stats(diff),dl=DIFF(diff);$("stPlayedL").textContent=dl+" played";$("stWonL").textContent=dl+" solved";$("stBestL").textContent=dl+" best";$("stPlayed").textContent=all.played;$("stWon").textContent=all.won;$("stBest").textContent=all.best?mmss(all.best):"–";
     startNextCountdown();
   }else{clearInterval(nextId)}
   document.querySelectorAll("#sw button").forEach(b=>{b.setAttribute("aria-pressed",b.dataset.sw===software);b.disabled=st.done});
@@ -1616,9 +1616,9 @@ function shareTextPlain(){
   lines.push(SITE);
   return lines.join("\n");
 }
-function stats(){
+function stats(d){
   let played=0,won=0,best=0;
-  for(let i=1;i<=todayNum();i++)for(const k of [i,i+HARD]){const s=store.get("caddle-"+k,null);if(s&&s.done){played++;if(s.won){won++;const t=s.official!=null?s.official*1000:s.end-s.start;if(!best||t<best)best=t}}}
+  for(let i=1;i<=todayNum();i++){const k=d==="hard"?i+HARD:i;const s=store.get("caddle-"+k,null);if(s&&s.done){played++;if(s.won){won++;const t=s.official!=null?s.official*1000:s.end-s.start;if(!best||t<best)best=t}}}
   return{played,won,best};
 }
 
