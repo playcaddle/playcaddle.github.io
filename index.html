@@ -71,6 +71,10 @@ header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-be
 .logo span:nth-child(5){background:var(--bush)}
 .logo span:nth-child(6){background:var(--brak)}
 .tag{margin:8px 0 0;color:var(--muted);max-width:56ch}
+.credit{margin:6px 0 0;color:var(--muted);font-size:.85rem;max-width:60ch}
+.credit a{color:var(--accent);font-weight:600;text-underline-offset:2px}
+.sitefoot{margin:28px 0 8px;padding-top:14px;border-top:1px solid var(--rule);text-align:center}
+.modal .credit{text-align:center;margin:14px auto 0}
 .live{margin:6px 0 0;font-family:var(--f-mono);font-size:.82rem;color:var(--good);font-variant-numeric:tabular-nums}
 .live::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);margin-right:7px;vertical-align:1px}
 .tabs{display:flex;gap:4px;padding:4px;border-radius:12px;background:var(--sheet);border:1px solid var(--rule)}
@@ -260,6 +264,7 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
     <div>
       <h1 class="logo" aria-label="Caddle"><span>C</span><span>A</span><span>D</span><span>D</span><span>L</span><span>E</span></h1>
       <p class="tag">An Easy and a Hard part every day. Model it in any CAD program, enter the mass in grams, and race the leaderboard.</p>
+      <p class="credit">Credit to <a href="https://www.tootalltoby.com" target="_blank" rel="noopener">TooTallToby</a>, whose speed-CAD challenges inspired Caddle.</p>
       <p class="live" id="liveStats" hidden></p>
     </div>
     <div class="tabs" role="tablist" aria-label="Game modes">
@@ -303,6 +308,7 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
     <div class="card">
       <h2>Learn by CAD tool</h2>
       <p class="msg">Pick a tool to see what it does, then practice every Caddle part that uses it.</p>
+      <p class="credit">Credit to <a href="https://www.tootalltoby.com" target="_blank" rel="noopener">TooTallToby</a> for the speed-CAD format. Want longer, real-world practice? Try his practice models and tournaments.</p>
       <input type="search" id="skillSearch" placeholder="Search tools, like loft or shell" aria-label="Search CAD tools">
       <div class="skillgrid" id="skillGrid"></div>
     </div>
@@ -406,6 +412,7 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
       </div>
     </div>
   </div>
+  <footer class="sitefoot"><p class="credit" style="margin:0 auto">Caddle is a free fan project. Credit to <a href="https://www.tootalltoby.com" target="_blank" rel="noopener">TooTallToby</a>, creator of the original speed-CAD challenges.</p></footer>
 </div>
 
 <div class="zoomer" id="zoomer" role="dialog" aria-modal="true" aria-label="Zoomed drawing" hidden>
@@ -432,6 +439,7 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
       <div><b id="stBest">–</b><span id="stBestL">best time</span></div>
     </div>
     <div class="tomorrow"><b id="mTomorrow">Come back tomorrow!</b><span class="next" id="nextIn"></span><button class="primary wide" id="mNext" hidden>New puzzle</button></div>
+    <p class="credit">Credit to <a href="https://www.tootalltoby.com" target="_blank" rel="noopener">TooTallToby</a>. Liked this? Try his speed-CAD practice models.</p>
   </div>
 </div>
 
