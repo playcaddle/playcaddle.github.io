@@ -28,6 +28,7 @@
 /* Layout: colorful drafting sheet as the hero on the left, a stack of instrument cards on the right; stacks on phones.
    Each part family carries its own hue (--hue), which tints the part, the title block, and the sheet's top band. */
 :root{
+  --wood:#e9dcc6; --wood-grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.003 0.09' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.27 0 0 0 0 0.12 0 0 0 0.34 -0.08'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"); --wood-seam:rgba(110,75,40,.10);
   --bg:#edf2f7; --sheet:#ffffff; --ink:#172230; --muted:#566677; --rule:#d3dde8;
   --accent:#2563eb; --accent-ink:#ffffff; --soft:#e4ecf7;
   --good:#16a34a; --warn:#eab308; --near:#f97316; --bad:#e11d48;
@@ -45,6 +46,7 @@
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){:root{
+  --wood:#1d1915; --wood-grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.003 0.09' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.85 0 0 0 0 0.62 0 0 0 0 0.40 0 0 0 0.2 -0.05'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"); --wood-seam:rgba(0,0,0,.25);
   --bg:#0d1420; --sheet:#141e2c; --ink:#e3eaf3; --muted:#93a3b5; --rule:#263447;
   --accent:#6aa0ff; --accent-ink:#0b1322; --soft:#1b2a3f;
   --good:#34d399; --warn:#facc15; --near:#fb923c; --bad:#fb7185;
@@ -58,7 +60,7 @@
   --gold:#facc15; --silver:#b8c4d0; --bronze:#e0985a; color-scheme:dark}}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+body{margin:0;background-color:var(--wood);background-image:repeating-linear-gradient(180deg,transparent 0 158px,var(--wood-seam) 158px 160px),var(--wood-grain);background-size:auto,100% 600px;color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
 [hidden]{display:none!important}
 .wrap{max-width:1200px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:grid;gap:18px}
 header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px}
