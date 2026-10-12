@@ -33,6 +33,7 @@
   --slot:#dc2626; --hex:#4f46e5; --shaft:#0891b2; --chan:#65a30d; --cbore:#c2410c; --cham:#0f766e;
   --pul:#b45309; --tube:#475569; --gus:#a21caf; --can:#15803d;
   --fins:#9f1239; --tbar:#6b21a8; --pock:#854d0e; --wedge:#4d7c0f; --spring:#be185d; --dome:#0369a1; --draft:#334155;
+  --pillow:#7e22ce; --plus:#e11d48; --stairs:#a16207; --dshaft:#0e7490; --handle:#57534e; --keyed:#1d4ed8; --csink:#9a3412; --ebox:#166534;
   --gold:#f5b301; --silver:#9aa7b4; --bronze:#c77b3a;
   --f-display:"Saira Condensed","Arial Narrow",sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -48,6 +49,7 @@
   --slot:#f87171; --hex:#818cf8; --shaft:#22d3ee; --chan:#a3e635; --cbore:#fdba74; --cham:#5eead4;
   --pul:#fbbf24; --tube:#94a3b8; --gus:#e879f9; --can:#4ade80;
   --fins:#fda4af; --tbar:#d8b4fe; --pock:#fcd34d; --wedge:#bef264; --spring:#f9a8d4; --dome:#7dd3fc; --draft:#cbd5e1;
+  --pillow:#c4b5fd; --plus:#fda4af; --stairs:#fde047; --dshaft:#67e8f9; --handle:#d6d3d1; --keyed:#93c5fd; --csink:#fdba74; --ebox:#86efac;
   --gold:#facc15; --silver:#b8c4d0; --bronze:#e0985a; color-scheme:dark}}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -439,7 +441,15 @@ const KIND = {
   wedge:{label:"RAMP BLOCK", emoji:"🧀", hue:"var(--wedge)"},
   spring:{label:"COIL SPRING", emoji:"🌀", hue:"var(--spring)"},
   dome:{label:"DOMED KNOB", emoji:"🍄", hue:"var(--dome)"},
-  draft:{label:"DRAFTED BOSS", emoji:"⛰️", hue:"var(--draft)"}
+  draft:{label:"DRAFTED BOSS", emoji:"⛰️", hue:"var(--draft)"},
+  pillow:{label:"PILLOW BLOCK", emoji:"🛏️", hue:"var(--pillow)"},
+  plus:{label:"CROSS BLOCK", emoji:"➕", hue:"var(--plus)"},
+  stairs:{label:"STAIR BLOCK", emoji:"🪜", hue:"var(--stairs)"},
+  dshaft:{label:"DOUBLE-D SPACER", emoji:"🧿", hue:"var(--dshaft)"},
+  handle:{label:"U-HANDLE", emoji:"🧳", hue:"var(--handle)"},
+  keyed:{label:"KEYED HUB", emoji:"🔑", hue:"var(--keyed)"},
+  csink:{label:"COUNTERSUNK PLATE", emoji:"🔻", hue:"var(--csink)"},
+  ebox:{label:"ELECTRONICS BOX", emoji:"🔌", hue:"var(--ebox)"}
 };
 const SKILLS={
   plate:["Extrude","Through holes","Rectangular pattern","Symmetric placement"],
@@ -465,7 +475,15 @@ const SKILLS={
   wedge:["Extrude","Through holes"],
   spring:["Helix","Sweep"],
   dome:["Revolve","Blind hole"],
-  draft:["Extrude","Draft"]
+  draft:["Extrude","Draft"],
+  pillow:["Extrude","Tangent arcs","Through holes"],
+  plus:["Extrude","Symmetric placement","Through holes"],
+  stairs:["Extrude","Chained dimensions"],
+  dshaft:["Extrude","Trim entities","Concentric bore"],
+  handle:["Sweep","Tangent arcs"],
+  keyed:["Extrude","Extruded cut","Concentric bore"],
+  csink:["Extrude","Countersink","Rectangular pattern"],
+  ebox:["Extrude","Shell","Rectangular pattern","Blind hole"]
 };
 const SKILL_INFO={
   "Extrude":"Pull a 2D sketch straight out into a solid. It's the starting point for almost every part.",
@@ -494,7 +512,9 @@ const SKILL_INFO={
   "Sketch fillet":"Round the corners of a sketch before extruding it, so the pocket or boss gets rounded corners.",
   "Helix":"A curve that winds around an axis at a set pitch and number of turns. It's the path for springs and threads.",
   "Blind hole":"A hole that stops at a set depth instead of going all the way through.",
-  "Draft":"Tilt faces by a small angle so a molded or cast part can slide out of its mold."
+  "Draft":"Tilt faces by a small angle so a molded or cast part can slide out of its mold.",
+  "Trim entities":"Cut sketch lines back to where they cross, like trimming a circle down to a double-D shape.",
+  "Countersink":"A cone-shaped opening at the top of a hole so a flat-head screw sits flush. The callout gives the top diameter and the angle."
 };
 const HELP = {
   Onshape:["Right-click the part in the parts list and choose Assign material.","Pick Custom and enter the density from the title block (g/cm³).","Open Mass properties from the right-side panel and read the mass."],
@@ -535,20 +555,27 @@ function rng(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=
 function mk(r){return{int:(a,b,s=1)=>{const n=Math.floor((b-a)/s)+1;return a+Math.floor(r()*n)*s},pick:arr=>arr[Math.floor(r()*arr.length)]}}
 const fmt=n=>Number.isInteger(n)?String(n):n.toFixed(1);
 const HARD=10000; // hard puzzles are stored as day number + 10000
-const EASY_KINDS=["plate","bracket","bushing","box","slot","hex","shaft","chan","cbore","cham","fins","tbar","pocket","wedge"];
-const HARD_KINDS=["hub","hopper","enclosure","pulley","tube","gusset","canister","spring","dome","draft"];
-const BANK={easy:EASY_KINDS.length*12,hard:HARD_KINDS.length*12}; // practice parts for Unlimited, 12 of each kind
+// v1 lists are frozen: they decide days 30-42 and practice parts P1-P168 / P1-P120, which people have already played
+const EASY_V1=["plate","bracket","bushing","box","slot","hex","shaft","chan","cbore","cham","fins","tbar","pocket","wedge"];
+const HARD_V1=["hub","hopper","enclosure","pulley","tube","gusset","canister","spring","dome","draft"];
+const EASY_NEW=["pillow","plus","stairs","dshaft"],HARD_NEW=["handle","keyed","csink","ebox"];
+const EASY_KINDS=[...EASY_V1,...EASY_NEW],HARD_KINDS=[...HARD_V1,...HARD_NEW];
+const V1_DAYS_END=42; // last day that uses the v1 rotation
+const BANK_V1={easy:EASY_V1.length*12,hard:HARD_V1.length*12};
+const BANK={easy:BANK_V1.easy+EASY_NEW.length*12,hard:BANK_V1.hard+HARD_NEW.length*12}; // 12 practice parts of every kind
 function cycleOrder(list,c,salt){const r=rng(c*131+salt),o=list.slice();for(let i=o.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[o[i],o[j]]=[o[j],o[i]]}return o}
 function kindFor(n,diff,bank){
-  const list=diff==="hard"?HARD_KINDS:EASY_KINDS;
-  if(bank)return list[(n-1)%list.length];
+  const hard=diff==="hard",v1=hard?HARD_V1:EASY_V1,nu=hard?HARD_NEW:EASY_NEW,list=hard?HARD_KINDS:EASY_KINDS;
+  if(bank){const b1=BANK_V1[hard?"hard":"easy"];return n<=b1?v1[(n-1)%v1.length]:nu[(n-b1-1)%nu.length]}
   // days 1-29 stay exactly as they were
   if(diff==="hard"&&n<=29)return["hub","hopper","enclosure"][(n-1)%3];
   if(diff!=="hard"&&n<=28)return["plate","bushing","bracket"][(n-1)%3];
   if(diff!=="hard"&&n===29)return"plate";
-  // from day 30: every kind once per cycle, shuffled, never the same kind two days running
-  const k=n-30,L=list.length,c=Math.floor(k/L),salt=diff==="hard"?7:3,o=cycleOrder(list,c,salt);
-  if(c>0&&o[0]===cycleOrder(list,c-1,salt)[L-1])[o[0],o[1]]=[o[1],o[0]];
+  // days 30-42: v1 rotation. From day 43: every kind (old and new) once per cycle, shuffled,
+  // never the same kind two days running
+  const salt=hard?7:3,useV1=n<=V1_DAYS_END,L1=useV1?v1:list,k=useV1?n-30:n-V1_DAYS_END-1,L=L1.length,c=Math.floor(k/L),o=cycleOrder(L1,c,useV1?salt:salt+20);
+  if(c>0&&o[0]===cycleOrder(L1,c-1,useV1?salt:salt+20)[L-1])[o[0],o[1]]=[o[1],o[0]];
+  if(!useV1&&c===0&&k===0&&o[0]===kindFor(V1_DAYS_END,diff,false))[o[0],o[1]]=[o[1],o[0]];
   return o[k%L];
 }
 function makePart(n,diff="easy",bank=false){
@@ -650,6 +677,36 @@ function makePart(n,diff="easy",bank=false){
     let hb=R.int(8,30,2);const Lb=R.int(25,L-20,5),Wb=R.int(20,W-15,5);
     while(hb>8&&Math.min(Lb,Wb)-2*hb*tn<8)hb-=2;
     p={kind,L,W,T,Lb,Wb,hb,th,V:L*W*T+Lb*Wb*hb-(Lb+Wb)*tn*hb*hb+4/3*tn*tn*hb**3};
+  }else if(kind==="pillow"){ // arch block: rectangle with a tangent half-circle top, bore at the arch center
+    const Wb=R.int(30,70,2),T=R.int(10,30,2),hb=R.int(Math.ceil(Wb*0.35),Math.ceil(Wb*0.8));
+    const d=R.int(6,Math.max(6,Math.floor(2*Math.min(Wb/2,hb)-10)));
+    p={kind,Wb,T,hb,d,V:T*(Wb*hb+PI*(Wb/2)**2/2-PI*d*d/4)};
+  }else if(kind==="plus"){ // cross-shaped plate with a center hole
+    const w=R.int(12,30,2),S=R.int(Math.max(40,w*2+10),110,5),T=R.int(5,15),d=R.int(4,Math.max(4,w-6));
+    p={kind,S,w,T,d,V:T*(2*S*w-w*w-PI*d*d/4)};
+  }else if(kind==="stairs"){ // staircase profile, equal steps, extruded
+    const n=R.int(2,5),u=R.int(10,25),r=R.int(6,18),W=R.int(20,60,5);
+    p={kind,n,u,r,W,V:W*u*r*n*(n+1)/2};
+  }else if(kind==="dshaft"){ // double-D spacer: cylinder with two parallel flats and a bore
+    const D=R.int(16,50,2),F=R.int(Math.ceil(D*0.55/2)*2,Math.floor(D*0.85/2)*2,2),d=R.int(4,Math.max(4,F-8)),L=R.int(10,60,5);
+    const r=D/2,h=F/2,seg=r*r*Math.acos(h/r)-h*Math.sqrt(r*r-h*h);
+    p={kind,D,F,d,L,V:L*(PI*r*r-2*seg-PI*d*d/4)};
+  }else if(kind==="handle"){ // solid rod swept along a U: two straight legs joined by a half-circle
+    const dr=R.int(6,16),Rc=R.int(Math.max(12,dr+4),40),Lg=R.int(20,80,5);
+    p={kind,dr,Rc,Lg,V:PI*dr*dr/4*(2*Lg+PI*Rc)};
+  }else if(kind==="keyed"){ // hub with a bore and one keyway
+    const D=R.int(30,80,2),L=R.int(15,50,5),d=R.int(10,Math.max(10,Math.min(40,Math.floor(D/2)))),b=R.int(3,Math.max(3,Math.floor(d/3))),t2=R.int(2,Math.max(2,Math.min(6,Math.floor(D/2-d/2-6))));
+    const r=d/2,Ak=b*(r+t2)-((b/2)*Math.sqrt(r*r-b*b/4)+r*r*Math.asin(b/(2*r)));
+    p={kind,D,L,d,b,t2,K:d+t2,V:L*(PI*D*D/4-PI*d*d/4-Ak)};
+  }else if(kind==="csink"){ // plate with four 90° countersunk through holes
+    const L=R.int(70,130,5),W=R.int(50,90,5),T=R.int(6,16),d=R.pick([4.5,5.5,6.6,9]),Dc={4.5:9,5.5:11,6.6:13,9:18}[d];
+    const hc=(Dc-d)/2,e=Math.max(R.int(10,15),Math.ceil(Dc/2+4));
+    const Tf=Math.max(T,Math.ceil(hc+3));
+    p={kind,L,W,T:Tf,d,Dc,e,V:L*W*Tf-4*(PI*d*d/4*Tf+PI*hc/12*(Dc*Dc+Dc*d+d*d)-PI*d*d/4*hc)};
+  }else if(kind==="ebox"){ // open-top shelled box with four standoffs on the floor
+    const L=R.int(70,130,5),W=R.int(50,100,5),H=R.int(25,50,5),t=R.int(2,4),Ds=R.pick([6,7,8]),ds={6:2.5,7:3,8:3.5}[Ds];
+    const hs=R.int(4,Math.max(4,Math.min(15,H-t-4))),ex=R.int(Math.ceil(t+Ds/2+2),Math.ceil(t+Ds/2+10)),ey=R.int(Math.ceil(t+Ds/2+2),Math.ceil(t+Ds/2+10));
+    p={kind,L,W,H,t,Ds,ds,hs,ex,ey,V:L*W*H-(L-2*t)*(W-2*t)*(H-t)+4*PI/4*(Ds*Ds-ds*ds)*hs};
   }else{ // hopper: square base plate + straight loft between two squares + through hole
     const B=R.int(50,90,5),tb=R.int(5,10),s1=B-2*R.int(3,8);
     const s2=R.int(Math.ceil(s1*0.35/2)*2,Math.floor(s1*0.7/2)*2,2),h=R.int(20,50,5),d=R.int(6,Math.max(6,s2-8));
@@ -985,6 +1042,97 @@ function draw(p,n){
     S.push(`<polygon class="fillp" points="${bx},${yb-Ts} ${bx+Lbs},${yb-Ts} ${bx+Lbs-e},${yb-Ts-hbs} ${bx+e},${yb-Ts-hbs}"/>`);
     dimV(yb-Ts,yb,x0+w,x0+w+22,fmt(p.T));dimV(yb-Ts-hbs,yb-Ts,bx+Lbs-e,x0+w+48,fmt(p.hb),bx+Lbs);
     txt(x0+44,y0-57,`BOSS DRAFT ${p.th}° ON ALL 4 SIDES · BOSS CENTERED · ${fmt(p.Lb)} × ${fmt(p.Wb)} AT BASE`,"vt","start");
+  }else if(p.kind==="pillow"){
+    const R0=p.Wb/2,s=Math.min(300/p.Wb,215/(p.T+p.hb+R0));
+    const w=p.Wb*s,x0=cx-w/2,y0=80,h=p.T*s,Rs=R0*s,y1=y0+h+64,yc=y1+Rs,yb=yc+p.hb*s,rb=p.d/2*s;
+    txt(x0,y0-50,"TOP","vt","start");txt(x0+44,y0-57,"ARCH TANGENT TO BOTH SIDES · BORE AT ARCH CENTER","vt","start");
+    rect(x0,y0,w,h);ln(cx-rb,y0,cx-rb,y0+h,"hid");ln(cx+rb,y0,cx+rb,y0+h,"hid");ln(cx,y0-6,cx,y0+h+6,"ctr");
+    dimV(y0,y0+h,x0,x0-22,fmt(p.T));
+    txt(x0,y1-12,"FRONT","vt","start");
+    S.push(`<path class="fillp" d="M${x0},${yb}V${yc}A${Rs},${Rs} 0 0 1 ${x0+w},${yc}V${yb}Z"/>`);
+    circ(cx,yc,rb);cross(cx,yc,Rs);
+    dimH(x0,x0+w,yb,yb+22,fmt(p.Wb));dimV(yc,yb,cx,x0-24,fmt(p.hb),x0);
+    leader(cx+Rs*a,yc-Rs*a,x0+w+30,y1-4,`R${fmt(R0)}`);
+    leader(cx+rb*a,yc+rb*a,x0+w+30,yc+22,`Ø${fmt(p.d)} THRU`);
+  }else if(p.kind==="plus"){
+    const s=Math.min(300/p.S,225/(p.S+p.T)),Ss=p.S*s,ws=p.w*s,cy0=80+Ss/2,y1=cy0+Ss/2+62,ts=p.T*s,rb=p.d/2*s,L=cx-Ss/2,Rr=cx+Ss/2,hw=ws/2;
+    txt(L,cy0-Ss/2-50,"TOP","vt","start");txt(L+44,cy0-Ss/2-57,"ARMS EQUAL AND SYMMETRIC · HOLE CENTERED","vt","start");
+    S.push(`<polygon class="fillp" points="${cx-hw},${cy0-Ss/2} ${cx+hw},${cy0-Ss/2} ${cx+hw},${cy0-hw} ${Rr},${cy0-hw} ${Rr},${cy0+hw} ${cx+hw},${cy0+hw} ${cx+hw},${cy0+Ss/2} ${cx-hw},${cy0+Ss/2} ${cx-hw},${cy0+hw} ${L},${cy0+hw} ${L},${cy0-hw} ${cx-hw},${cy0-hw}"/>`);
+    circ(cx,cy0,rb);cross(cx,cy0,rb);
+    dimH(cx-hw,cx+hw,cy0-Ss/2,cy0-Ss/2-14,fmt(p.w));dimH(L,Rr,cy0+hw,cy0+Ss/2+18,fmt(p.S));dimV(cy0-Ss/2,cy0+Ss/2,cx-hw,L-20,fmt(p.S));
+    leader(cx+rb*a,cy0-rb*a,Rr+30,cy0-Ss/4,`Ø${fmt(p.d)} THRU`);
+    txt(L,y1-12,"FRONT","vt","start");rect(L,y1,Ss,ts);ln(cx-hw,y1,cx-hw,y1+ts);ln(cx+hw,y1,cx+hw,y1+ts);
+    ln(cx-rb,y1,cx-rb,y1+ts,"hid");ln(cx+rb,y1,cx+rb,y1+ts,"hid");dimV(y1,y1+ts,Rr,Rr+22,fmt(p.T));
+  }else if(p.kind==="stairs"){
+    const Lt=p.n*p.u,Ht=p.n*p.r,s=Math.min(420/Lt,225/(p.W+Ht)),w=Lt*s,x0=cx-w/2,y0=80,h=p.W*s,us=p.u*s,rs=p.r*s,y1=y0+h+62,yb=y1+Ht*s;
+    txt(x0,y0-50,"TOP","vt","start");txt(x0+44,y0-57,`${p.n} EQUAL STEPS · TALLEST STEP AT LEFT`,"vt","start");
+    rect(x0,y0,w,h);for(let i=1;i<p.n;i++)ln(x0+i*us,y0,x0+i*us,y0+h);
+    dimV(y0,y0+h,x0,x0-22,fmt(p.W));
+    txt(x0,y1-30,"FRONT","vt","start");
+    const pts=[`${x0},${yb}`,`${x0+w},${yb}`];for(let i=p.n-1;i>=0;i--){const hy=yb-(p.n-i)*rs;pts.push(`${x0+(i+1)*us},${hy}`,`${x0+i*us},${hy}`)}
+    S.push(`<polygon class="fillp" points="${pts.join(" ")}"/>`);
+    dimH(x0,x0+w,yb,yb+22,fmt(Lt));dimV(y1,yb,x0,x0-22,fmt(Ht));
+    dimH(x0,x0+us,y1,y1-14,fmt(p.u));dimV(yb-rs,yb,x0+w,x0+w+22,fmt(p.r));
+  }else if(p.kind==="dshaft"){
+    const s=Math.min(250/p.D,215/(p.D+p.L)),Rs=p.D/2*s,hs=p.F/2*s,ks=Math.sqrt(Rs*Rs-hs*hs),cy0=86+Rs,y1=cy0+Rs+64,Ls=p.L*s,rb=p.d/2*s;
+    txt(cx-Rs,cy0-Rs-30,"TOP","vt","start");
+    S.push(`<path class="fillp" d="M${cx+hs},${cy0-ks}L${cx+hs},${cy0+ks}A${Rs},${Rs} 0 0 1 ${cx-hs},${cy0+ks}L${cx-hs},${cy0-ks}A${Rs},${Rs} 0 0 1 ${cx+hs},${cy0-ks}Z"/>`);
+    circ(cx,cy0,rb);cross(cx,cy0,Rs);
+    dimH(cx-hs,cx+hs,cy0-ks,cy0-Rs-14,`${fmt(p.F)} A/F`);dimV(cy0-Rs,cy0+Rs,cx,cx+Rs+28,`Ø${fmt(p.D)}`);
+    leader(cx-rb*a,cy0+rb*a,cx-Rs-34,cy0+Rs*0.75,`Ø${fmt(p.d)} THRU`);
+    txt(cx-hs,y1-12,"FRONT","vt","start");rect(cx-hs,y1,2*hs,Ls);
+    ln(cx-rb,y1,cx-rb,y1+Ls,"hid");ln(cx+rb,y1,cx+rb,y1+Ls,"hid");ln(cx,y1-8,cx,y1+Ls+8,"ctr");
+    dimV(y1,y1+Ls,cx+hs,cx+hs+24,fmt(p.L));
+    txt(cx-hs,y1+Ls+30,"TWO PARALLEL FLATS, CENTERED · BORE CENTERED","vt","start");
+  }else if(p.kind==="handle"){
+    const s=Math.min(290/(2*p.Rc+p.dr),255/(p.Lg+p.Rc+p.dr)),Rc=p.Rc*s,r=p.dr/2*s,ya=80+Rc+r,yb=ya+p.Lg*s,xl=cx-Rc,xr=cx+Rc;
+    txt(xl-r,64,"FRONT","vt","start");
+    S.push(`<path class="fillp" d="M${xl-r},${yb}V${ya}A${Rc+r},${Rc+r} 0 0 1 ${xr+r},${ya}V${yb}H${xr-r}V${ya}A${Rc-r},${Rc-r} 0 0 0 ${xl+r},${ya}V${yb}Z"/>`);
+    S.push(`<path class="ctr" d="M${xl},${yb+8}V${ya}A${Rc},${Rc} 0 0 1 ${xr},${ya}V${yb+8}"/>`);
+    ln(xl-r,ya,xl+r,ya,"hid");ln(xr-r,ya,xr+r,ya,"hid");
+    dimH(xl,xr,yb,yb+24,fmt(2*p.Rc));dimV(ya,yb,xr+r,xr+r+26,fmt(p.Lg));
+    leader(cx+Rc*a,ya-Rc*a,xr+r+30,ya-Rc-12,`CL R${fmt(p.Rc)}`);
+    const ex=xr+r+150,ey=ya+40;txt(ex-r,ey-r-30,"END","vt","start");circ(ex,ey,r,"fillp");cross(ex,ey,r);
+    dimH(ex-r,ex+r,ey-r,ey-r-12,`Ø${fmt(p.dr)}`);
+    txt(ex-r-20,ey+r+30,"SOLID ROD SWEPT ALONG","vt","start");txt(ex-r-20,ey+r+44,"THE CENTERLINE · DASHED","vt","start");txt(ex-r-20,ey+r+58,"LINES MARK WHERE LEGS","vt","start");txt(ex-r-20,ey+r+72,"MEET THE BEND","vt","start");
+  }else if(p.kind==="keyed"){
+    const s=Math.min(280/p.D,205/(p.D+p.L)),R=p.D/2*s,rb=p.d/2*s,bk=p.b/2*s,ky=(p.d/2+p.t2)*s,yk0=Math.sqrt(rb*rb-bk*bk),cy0=80+R,y1=80+2*R+60,Ls=p.L*s;
+    txt(cx-R,64,"TOP","vt","start");circ(cx,cy0,R,"fillp");
+    S.push(`<path class="hole" d="M${cx-bk},${cy0-yk0}V${cy0-ky}H${cx+bk}V${cy0-yk0}A${rb},${rb} 0 1 1 ${cx-bk},${cy0-yk0}Z"/>`);
+    cross(cx,cy0,R);
+    dimH(cx-bk,cx+bk,cy0-ky,cy0-R-14,fmt(p.b));dimV(cy0-ky,cy0+rb,cx+bk,cx+R+26,fmt(p.K),cx);
+    leader(cx-rb*a,cy0+rb*a,cx-R-34,cy0+R*0.7,`Ø${fmt(p.d)} BORE`);
+    txt(cx-R,y1-40,"FRONT","vt","start");rect(cx-R,y1,2*R,Ls);
+    ln(cx-rb,y1,cx-rb,y1+Ls,"hid");ln(cx+rb,y1,cx+rb,y1+Ls,"hid");ln(cx-bk,y1,cx-bk,y1+Ls,"hid");ln(cx+bk,y1,cx+bk,y1+Ls,"hid");ln(cx,y1-10,cx,y1+Ls+10,"ctr");
+    dimH(cx-R,cx+R,y1+Ls,y1+Ls+22,`Ø${fmt(p.D)}`);dimV(y1,y1+Ls,cx+R,cx+R+26,fmt(p.L));
+    txt(cx-R,y1+Ls+46,`KEYWAY THRU FULL LENGTH · ${fmt(p.K)} = BOTTOM OF BORE TO TOP OF KEYWAY`,"vt","start");
+  }else if(p.kind==="csink"){
+    const s=Math.min(440/p.L,235/(p.W+p.T)),w=p.L*s,h=p.W*s,x0=cx-w/2,y0=80,t=p.T*s,y1=y0+h+60,hr=p.d/2*s,Rc=p.Dc/2*s,es=p.e*s,hcs=(p.Dc-p.d)/2*s;
+    txt(x0,y0-50,"TOP","vt","start");rect(x0,y0,w,h);
+    [[x0+es,y0+es],[x0+w-es,y0+es],[x0+es,y0+h-es],[x0+w-es,y0+h-es]].forEach(([x,y])=>{circ(x,y,Rc);circ(x,y,hr);cross(x,y,Rc)});
+    dimH(x0,x0+w,y0,y0-34,fmt(p.L));dimH(x0,x0+es,y0,y0-14,fmt(p.e));dimV(y0,y0+h,x0,x0-38,fmt(p.W));dimV(y0,y0+es,x0,x0-16,fmt(p.e));
+    leader(x0+w-es+Rc*a,y0+h-es+Rc*a,x0+w+26,y0+h+6,`4× Ø${fmt(p.d)} THRU`);
+    txt(x0+w+44,y0+h+24,`CSK Ø${fmt(p.Dc)} × 90°`,"dt","start");
+    txt(x0,y1-10,"FRONT","vt","start");rect(x0,y1,w,t);
+    [x0+es,x0+w-es].forEach(x=>{
+      S.push(`<polyline class="hid" points="${x-Rc},${y1} ${x-hr},${y1+hcs} ${x-hr},${y1+t}"/>`);
+      S.push(`<polyline class="hid" points="${x+Rc},${y1} ${x+hr},${y1+hcs} ${x+hr},${y1+t}"/>`);
+      ln(x,y1-6,x,y1+t+6,"ctr")});
+    dimV(y1,y1+t,x0+w,x0+w+22,fmt(p.T));
+    txt(x0,y1+t+30,"HOLE PATTERN SYMMETRIC · 90° INCLUDED ANGLE","vt","start");
+  }else if(p.kind==="ebox"){
+    const s=Math.min(440/p.L,225/(p.W+p.H)),w=p.L*s,h=p.W*s,x0=cx-w/2,y0=80,ts=p.t*s,y1=y0+h+60,Hs=p.H*s,yb=y1+Hs;
+    const R=p.Ds/2*s,rh=p.ds/2*s,hss=p.hs*s,exs=p.ex*s,eys=p.ey*s,sx=[x0+exs,x0+w-exs],sy=[y0+eys,y0+h-eys];
+    txt(x0,y0-50,"TOP","vt","start");txt(x0+44,y0-57,`OPEN TOP · WALLS AND FLOOR ${fmt(p.t)} THICK · STANDOFFS STAND ON THE FLOOR`,"vt","start");
+    rect(x0,y0,w,h);S.push(`<rect class="ln" x="${x0+ts}" y="${y0+ts}" width="${w-2*ts}" height="${h-2*ts}"/>`);
+    sx.forEach(x=>sy.forEach(y=>{circ(x,y,R,"fillp");circ(x,y,rh);cross(x,y,R)}));
+    dimH(x0,x0+w,y0,y0-34,fmt(p.L));dimH(x0,sx[0],y0,y0-14,fmt(p.ex));dimV(y0,y0+h,x0,x0-40,fmt(p.W));dimV(y0,sy[0],x0,x0-18,fmt(p.ey));
+    leader(sx[1]+R*a,sy[1]+R*a,x0+w+26,y0+h+6,`4× Ø${fmt(p.Ds)} STANDOFF`);
+    txt(x0+w+44,y0+h+24,`Ø${fmt(p.ds)} × ${fmt(p.hs)} DEEP`,"dt","start");
+    txt(x0,y1-10,"FRONT","vt","start");rect(x0,y1,w,Hs);
+    S.push(`<polyline class="hid" points="${x0+ts},${y1} ${x0+ts},${yb-ts} ${x0+w-ts},${yb-ts} ${x0+w-ts},${y1}"/>`);
+    sx.forEach(x=>{S.push(`<polyline class="hid" points="${x-R},${yb-ts} ${x-R},${yb-ts-hss} ${x+R},${yb-ts-hss} ${x+R},${yb-ts}"/>`);ln(x-rh,yb-ts-hss,x-rh,yb-ts,"hid");ln(x+rh,yb-ts-hss,x+rh,yb-ts,"hid")});
+    dimV(y1,yb,x0+w,x0+w+46,fmt(p.H));dimV(yb-ts,yb,x0+w,x0+w+20,fmt(p.t));dimV(yb-ts-hss,yb-ts,sx[0]-R,x0-22,fmt(p.hs),x0);
   }else{
     const s=Math.min(440/p.L,240/(p.W+p.H));
     const w=p.L*s,wd=p.W*s,x0=cx-w/2,y0=80,t=p.T*s,y1=y0+wd+60,yb=y1+p.H*s,hr=p.d/2*s;
