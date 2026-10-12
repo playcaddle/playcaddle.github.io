@@ -34,6 +34,7 @@
   --pul:#b45309; --tube:#475569; --gus:#a21caf; --can:#15803d;
   --fins:#9f1239; --tbar:#6b21a8; --pock:#854d0e; --wedge:#4d7c0f; --spring:#be185d; --dome:#0369a1; --draft:#334155;
   --pillow:#7e22ce; --plus:#e11d48; --stairs:#a16207; --dshaft:#0e7490; --handle:#57534e; --keyed:#1d4ed8; --csink:#9a3412; --ebox:#166534;
+  --mbr:#b91c1c; --fho:#155e75; --whl:#92400e; --abr:#4338ca;
   --gold:#f5b301; --silver:#9aa7b4; --bronze:#c77b3a;
   --f-display:"Saira Condensed","Arial Narrow",sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -50,6 +51,7 @@
   --pul:#fbbf24; --tube:#94a3b8; --gus:#e879f9; --can:#4ade80;
   --fins:#fda4af; --tbar:#d8b4fe; --pock:#fcd34d; --wedge:#bef264; --spring:#f9a8d4; --dome:#7dd3fc; --draft:#cbd5e1;
   --pillow:#c4b5fd; --plus:#fda4af; --stairs:#fde047; --dshaft:#67e8f9; --handle:#d6d3d1; --keyed:#93c5fd; --csink:#fdba74; --ebox:#86efac;
+  --mbr:#fca5a5; --fho:#67e8f9; --whl:#fcd34d; --abr:#a5b4fc;
   --gold:#facc15; --silver:#b8c4d0; --bronze:#e0985a; color-scheme:dark}}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -188,6 +190,11 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
 .dt{fill:var(--accent);font-family:var(--f-mono);font-size:12px;font-weight:500}
 .vt{fill:var(--muted);font-family:var(--f-mono);font-size:10px;letter-spacing:.08em}
 .frame{stroke:var(--ink);stroke-width:1.2;fill:var(--sheet)}
+.hatch{fill:url(#hatch);stroke:var(--ink);stroke-width:1.6}
+.hatchbg{fill:color-mix(in srgb,var(--hue) 18%,var(--sheet))}
+.hatchln{stroke:color-mix(in srgb,var(--hue) 70%,var(--ink));stroke-width:1}
+.cut{stroke:var(--ink);stroke-width:2;stroke-dasharray:14 4 3 4;fill:none}
+.lbl{fill:var(--ink);font-family:var(--f-display);font-weight:700;font-size:15px}
 .wire{fill:none;stroke:color-mix(in srgb,var(--hue) 60%,var(--ink));stroke-linecap:round}
 .wireb{fill:none;stroke:color-mix(in srgb,var(--hue) 28%,var(--sheet));stroke-linecap:round}
 .tbband{fill:var(--hue)}
@@ -469,7 +476,11 @@ const KIND = {
   handle:{label:"U-HANDLE", emoji:"🧳", hue:"var(--handle)"},
   keyed:{label:"KEYED HUB", emoji:"🔑", hue:"var(--keyed)"},
   csink:{label:"COUNTERSUNK PLATE", emoji:"🔻", hue:"var(--csink)"},
-  ebox:{label:"ELECTRONICS BOX", emoji:"🔌", hue:"var(--ebox)"}
+  ebox:{label:"ELECTRONICS BOX", emoji:"🔌", hue:"var(--ebox)"},
+  mbracket:{label:"MOUNT BRACKET", emoji:"🧰", hue:"var(--mbr)"},
+  fhousing:{label:"FLANGED HOUSING", emoji:"🛢️", hue:"var(--fho)"},
+  wheel:{label:"WEB WHEEL", emoji:"☸️", hue:"var(--whl)"},
+  abracket:{label:"ANGLE MOUNT", emoji:"⛺", hue:"var(--abr)"}
 };
 const SKILLS={
   plate:["Extrude","Through holes","Rectangular pattern","Symmetric placement"],
@@ -503,7 +514,11 @@ const SKILLS={
   handle:["Sweep","Tangent arcs"],
   keyed:["Extrude","Extruded cut","Concentric bore"],
   csink:["Extrude","Countersink","Rectangular pattern"],
-  ebox:["Extrude","Shell","Rectangular pattern","Blind hole"]
+  ebox:["Extrude","Shell","Rectangular pattern","Blind hole"],
+  mbracket:["Extrude","Slot","Counterbore","Rib","Chamfer","Fillet"],
+  fhousing:["Extrude","Counterbore","Sketch fillet","Extruded cut","Section views"],
+  wheel:["Revolve","Circular pattern","Extruded cut","Chamfer","Section views"],
+  abracket:["Extrude","Angled sketch plane","Through holes","Fillet","Auxiliary views"]
 };
 const SKILL_INFO={
   "Extrude":"Pull a 2D sketch straight out into a solid. It's the starting point for almost every part.",
@@ -534,7 +549,10 @@ const SKILL_INFO={
   "Blind hole":"A hole that stops at a set depth instead of going all the way through.",
   "Draft":"Tilt faces by a small angle so a molded or cast part can slide out of its mold.",
   "Trim entities":"Cut sketch lines back to where they cross, like trimming a circle down to a double-D shape.",
-  "Countersink":"A cone-shaped opening at the top of a hole so a flat-head screw sits flush. The callout gives the top diameter and the angle."
+  "Countersink":"A cone-shaped opening at the top of a hole so a flat-head screw sits flush. The callout gives the top diameter and the angle.",
+  "Section views":"Read a cut-through view where hatching marks solid material. It shows inside features like stepped bores and webs.",
+  "Auxiliary views":"Read a view drawn square to an angled face, so holes on that face show their true size and position.",
+  "Angled sketch plane":"Sketch on an angled face (or a plane built from it) so holes go in perpendicular to that face."
 };
 const HELP = {
   Onshape:["Right-click the part in the parts list and choose Assign material.","Pick Custom and enter the density from the title block (g/cm³).","Open Mass properties from the right-side panel and read the mass."],
@@ -579,14 +597,22 @@ const HARD=10000; // hard puzzles are stored as day number + 10000
 const EASY_V1=["plate","bracket","bushing","box","slot","hex","shaft","chan","cbore","cham","fins","tbar","pocket","wedge"];
 const HARD_V1=["hub","hopper","enclosure","pulley","tube","gusset","canister","spring","dome","draft"];
 const EASY_NEW=["pillow","plus","stairs","dshaft"],HARD_NEW=["handle","keyed","csink","ebox"];
+// From day 43 the daily Hard puzzle is a multi-feature part; earlier Hard types stay as practice
+const HARD_V2=["mbracket","fhousing","wheel","abracket"];
 const EASY_KINDS=[...EASY_V1,...EASY_NEW],HARD_KINDS=[...HARD_V1,...HARD_NEW];
 const V1_DAYS_END=42; // last day that uses the v1 rotation
 const BANK_V1={easy:EASY_V1.length*12,hard:HARD_V1.length*12};
-const BANK={easy:BANK_V1.easy+EASY_NEW.length*12,hard:BANK_V1.hard+HARD_NEW.length*12}; // 12 practice parts of every kind
+const BANK={easy:BANK_V1.easy+EASY_NEW.length*12,hard:BANK_V1.hard+HARD_NEW.length*12+HARD_V2.length*12}; // 12 practice parts of every kind
 function cycleOrder(list,c,salt){const r=rng(c*131+salt),o=list.slice();for(let i=o.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[o[i],o[j]]=[o[j],o[i]]}return o}
 function kindFor(n,diff,bank){
   const hard=diff==="hard",v1=hard?HARD_V1:EASY_V1,nu=hard?HARD_NEW:EASY_NEW,list=hard?HARD_KINDS:EASY_KINDS;
-  if(bank){const b1=BANK_V1[hard?"hard":"easy"];return n<=b1?v1[(n-1)%v1.length]:nu[(n-b1-1)%nu.length]}
+  if(bank){const b1=BANK_V1[hard?"hard":"easy"],b2=b1+nu.length*12;
+    if(n<=b1)return v1[(n-1)%v1.length];if(n<=b2||!hard)return nu[(n-b1-1)%nu.length];return HARD_V2[(n-b2-1)%HARD_V2.length]}
+  if(hard&&n>V1_DAYS_END){ // multi-feature Hard rotation
+    const k=n-V1_DAYS_END-1,L=HARD_V2.length,c=Math.floor(k/L),o=cycleOrder(HARD_V2,c,41);
+    if(c>0&&o[0]===cycleOrder(HARD_V2,c-1,41)[L-1])[o[0],o[1]]=[o[1],o[0]];
+    return o[k%L];
+  }
   // days 1-29 stay exactly as they were
   if(diff==="hard"&&n<=29)return["hub","hopper","enclosure"][(n-1)%3];
   if(diff!=="hard"&&n<=28)return["plate","bushing","bracket"][(n-1)%3];
@@ -727,6 +753,49 @@ function makePart(n,diff="easy",bank=false){
     const L=R.int(70,130,5),W=R.int(50,100,5),H=R.int(25,50,5),t=R.int(2,4),Ds=R.pick([6,7,8]),ds={6:2.5,7:3,8:3.5}[Ds];
     const hs=R.int(4,Math.max(4,Math.min(15,H-t-4))),ex=R.int(Math.ceil(t+Ds/2+2),Math.ceil(t+Ds/2+10)),ey=R.int(Math.ceil(t+Ds/2+2),Math.ceil(t+Ds/2+10));
     p={kind,L,W,H,t,Ds,ds,hs,ex,ey,V:L*W*H-(L-2*t)*(W-2*t)*(H-t)+4*PI/4*(Ds*Ds-ds*ds)*hs};
+  }else if(kind==="mbracket"){ // L-bracket: slots, rounded base corners, counterbored hole in the upright, edge ribs, top chamfers
+    const L=R.int(70,120,5),W=R.int(40,70,2),T=R.int(5,10),H=R.int(50,90,5);
+    const Rb=R.pick([0,5,8,10].filter(r=>r<=W/4)),nr=R.pick([0,2]),c=R.pick([0,3,5,8]);
+    const tr=R.int(4,7),ra=R.int(15,Math.max(15,Math.min(35,L-T-35))),rbh=R.int(15,Math.max(15,Math.min(30,H-T-c-8)));
+    const du=R.pick([6.6,9,11]),Dcu={6.6:11,9:15,11:18}[du],dcu=R.int(2,Math.max(2,T-3));
+    const zlo=Math.ceil(T+Dcu/2+4),zhi=Math.floor(H-c-Dcu/2-4),zh=R.int(zlo,Math.max(zlo,zhi));
+    const w=R.pick([6,8,10]),xmin=Math.max(6,Rb+2),xmax=L-T-(nr?ra:0)-3,Ls=Math.min(R.int(10,25,5),Math.max(5,Math.floor((xmax-xmin-w)/5)*5));
+    const xs=R.int(Math.ceil(xmin+Ls/2+w/2),Math.max(Math.ceil(xmin+Ls/2+w/2),Math.floor(xmax-Ls/2-w/2)));
+    const ys=R.int(Math.ceil(w/2+3),Math.max(Math.ceil(w/2+3),Math.floor(W/2-w/2-3)));
+    p={kind,L,W,T,H,Rb,nr,tr,ra,rbh,c,du,Dcu,dcu,zh,w,Ls,xs,ys,
+       V:L*W*T-2*(1-PI/4)*Rb*Rb*T+W*T*(H-T)-2*(c*c/2)*T-2*(Ls*w+PI*w*w/4)*T-PI/4*(Dcu*Dcu*dcu+du*du*(T-dcu))+nr*tr*ra*rbh/2};
+  }else if(kind==="fhousing"){ // square flange, counterbored bolt square, boss with stepped bore, cross-slot or chamfer
+    const S=R.int(60,100,2),tf=R.int(6,12),db=R.pick([4.5,5.5,6.6]),Dcb={4.5:8,5.5:10,6.6:11}[db],dcb=R.int(2,Math.max(2,tf-3));
+    let rc=R.int(4,12);const Db=R.int(26,Math.max(26,Math.floor(S*0.55/2)*2),2);
+    const Pmin=Math.ceil(Math.SQRT2*(Db/2+Dcb/2+3)/2)*2,Pmax=Math.floor((S-Dcb-6)/2)*2;let P=R.int(Pmin,Math.max(Pmin,Pmax),2);
+    const cornerOk=()=>P/2<=S/2-rc||rc-Math.SQRT2*(P/2-(S/2-rc))>=Dcb/2+2;
+    while(!cornerOk()&&rc>3)rc--;
+    const hb=R.int(10,30),d=R.int(8,Math.max(8,Db-16)),D2=Math.min(d+R.int(4,8),Db-6),h2=R.int(3,Math.max(3,Math.min(12,hb-3)));
+    const mode=R.pick(["slot","cham"]),ws=R.int(4,Math.max(4,D2-4)),hsl=R.int(2,Math.max(2,h2-1)),cb=R.int(1,3);
+    const strip=(a,r)=>a>=r?PI*r*r:2*(a*Math.sqrt(r*r-a*a)+r*r*Math.asin(a/r));
+    const cut=mode==="slot"?hsl*(strip(ws/2,Db/2)-strip(ws/2,D2/2)):2*PI*(Db/2-cb/3)*cb*cb/2;
+    p={kind,S,tf,rc,db,Dcb,dcb,P,Db,hb,d,D2,h2,mode,ws,hsl,cb,
+       V:tf*(S*S-4*(1-PI/4)*rc*rc)-4*PI/4*(Dcb*Dcb*dcb+db*db*(tf-dcb))+PI/4*Db*Db*hb-PI/4*(D2*D2*h2+d*d*(tf+hb-h2))-cut};
+  }else if(kind==="wheel"){ // rim + web + hub, lightening holes, keyway, rim chamfers
+    const Do=R.int(70,140,2),trim=R.int(6,14),Di=Do-2*trim,Lr=R.int(14,30,2),tw=R.int(4,Math.max(4,Lr-6));
+    const Dh=R.int(24,Math.max(24,Math.min(44,Math.floor(Di*0.45/2)*2)),2),Lh=R.int(Lr,Lr+16,2);
+    const d=R.int(8,Math.max(8,Dh-14)),b=R.int(3,Math.max(3,Math.floor(d/3))),t2=R.int(2,Math.max(2,Math.min(5,Math.floor(Dh/2-d/2-5))));
+    const N=R.pick([3,4,5,6]),gap=Di/2-Dh/2,Pd=(Dh+Di)/2;let dl=R.int(6,Math.max(6,Math.floor(gap-8)));
+    while(dl>6&&Pd*Math.sin(PI/N)<dl+3)dl--;
+    const c=R.int(1,3),r=d/2,Ak=b*(r+t2)-((b/2)*Math.sqrt(r*r-b*b/4)+r*r*Math.asin(b/(2*r)));
+    p={kind,Do,Di,Lr,tw,Dh,Lh,d,b,t2,K:d+t2,N,dl,Pd,c,
+       V:PI/4*(Dh*Dh-d*d)*Lh-Ak*Lh+PI/4*(Di*Di-Dh*Dh)*tw-N*PI/4*dl*dl*tw+PI/4*(Do*Do-Di*Di)*Lr-2*(2*PI*(Do/2-c/3)*c*c/2)};
+  }else if(kind==="abracket"){ // base plate + plate rising at an angle; holes square to the angled face
+    const L=R.int(50,90,5),W=R.int(30,60,2),T=R.int(4,8),th=R.pick([30,45,60]),Li=R.int(40,80,5),t=th*PI/180;
+    const Rb=R.pick([0,5,8].filter(r=>r<=W/4)),sQ=T*Math.tan(t/2),Qx=L-T*Math.sin(t)+sQ*Math.cos(t);
+    const db=R.pick([4.5,5.5,6.6]),yb=R.int(Math.ceil(db/2+4),Math.max(Math.ceil(db/2+4),Math.floor(W/2-db/2-4)));
+    const xb=R.int(Math.ceil(Rb+db/2+4),Math.max(Math.ceil(Rb+db/2+4),Math.floor(Qx-db/2-4)));
+    const di=R.pick([5.5,6.6,9]),ni=R.pick([1,2])===2&&Math.floor(W/2-di/2-4)>=Math.ceil(di/2+3)?2:1,si=R.int(Math.ceil(di/2+4),Math.max(Math.ceil(di/2+4),Math.floor(Li-sQ-di/2-4)));
+    const yi=ni===2?R.int(Math.ceil(di/2+3),Math.max(Math.ceil(di/2+3),Math.floor(W/2-di/2-4))):0;
+    const pts=[[0,0],[L,0],[L+Li*Math.cos(t),Li*Math.sin(t)],[L+Li*Math.cos(t)-T*Math.sin(t),Li*Math.sin(t)+T*Math.cos(t)],[Qx,T],[0,T]];
+    let A=0;for(let i=0;i<pts.length;i++){const[a1,b1]=pts[i],[a2,b2]=pts[(i+1)%pts.length];A+=a1*b2-a2*b1}A=Math.abs(A)/2;
+    p={kind,L,W,T,th,Li,Rb,db,xb,yb,ni,di,si,yi,sQ,Qx,pts,
+       V:A*W-2*(1-PI/4)*Rb*Rb*T-2*PI/4*db*db*T-ni*PI/4*di*di*T};
   }else{ // hopper: square base plate + straight loft between two squares + through hole
     const B=R.int(50,90,5),tb=R.int(5,10),s1=B-2*R.int(3,8);
     const s2=R.int(Math.ceil(s1*0.35/2)*2,Math.floor(s1*0.7/2)*2,2),h=R.int(20,50,5),d=R.int(6,Math.max(6,s2-8));
@@ -745,11 +814,24 @@ const circ=(x,y,r,c="hole")=>S.push(`<circle class="${c}" cx="${x}" cy="${y}" r=
 const txt=(x,y,t,c="dt",a="middle",rot)=>S.push(`<text class="${c}" x="${x}" y="${y}" text-anchor="${a}"${rot?` transform="rotate(${rot} ${x} ${y})"`:""}>${t}</text>`);
 function dimH(xa,xb,yRef,yDim,t){const s=Math.sign(yDim-yRef)||-1;ln(xa,yRef+3*s,xa,yDim+5*s,"dm");ln(xb,yRef+3*s,xb,yDim+5*s,"dm");S.push(`<line class="dm" x1="${xa}" y1="${yDim}" x2="${xb}" y2="${yDim}" marker-start="url(#ar)" marker-end="url(#ar)"/>`);if(Math.abs(xb-xa)<16)txt(Math.max(xa,xb)+6,yDim+4,t,"dt","start");else txt((xa+xb)/2,yDim-4,t)}
 function dimV(ya,yb,xRefA,xDim,t,xRefB){if(xRefB===undefined)xRefB=xRefA;const s=Math.sign(xDim-xRefA)||-1;ln(xRefA+3*s,ya,xDim+5*s,ya,"dm");ln(xRefB+3*s,yb,xDim+5*s,yb,"dm");S.push(`<line class="dm" x1="${xDim}" y1="${ya}" x2="${xDim}" y2="${yb}" marker-start="url(#ar)" marker-end="url(#ar)"/>`);if(Math.abs(yb-ya)<16){const lf=xDim<xRefA;txt(lf?xDim-5:xDim+5,(ya+yb)/2+4,t,"dt",lf?"end":"start")}else txt(xDim-4,(ya+yb)/2,t,"dt","middle",-90)}
+function dimA(x1,y1,x2,y2,off,t){ // dimension parallel to a sloped edge; off>0 is to the left of p1->p2
+  const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),nx=dy/L,ny=-dx/L,g=Math.sign(off)||1,ax=x1+nx*off,ay=y1+ny*off,bx=x2+nx*off,by=y2+ny*off;
+  ln(x1+nx*3*g,y1+ny*3*g,ax+nx*5*g,ay+ny*5*g,"dm");ln(x2+nx*3*g,y2+ny*3*g,bx+nx*5*g,by+ny*5*g,"dm");
+  S.push(`<line class="dm" x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" marker-start="url(#ar)" marker-end="url(#ar)"/>`);
+  let an=Math.atan2(dy,dx)*180/Math.PI;if(an>90)an-=180;if(an<-90)an+=180;
+  const mx=((ax+bx)/2+nx*8*g).toFixed(1),my=((ay+by)/2+ny*8*g).toFixed(1);
+  S.push(`<text class="dt" x="${mx}" y="${my}" text-anchor="middle" dominant-baseline="middle" transform="rotate(${an.toFixed(1)} ${mx} ${my})">${t}</text>`);
+}
+function dimAng(cx,cy,r,a0,a1,t){ // angle arc, degrees on screen (0 = right, negative = up)
+  const d=Math.PI/180,p0=[cx+r*Math.cos(a0*d),cy+r*Math.sin(a0*d)],p1=[cx+r*Math.cos(a1*d),cy+r*Math.sin(a1*d)],am=(a0+a1)/2*d;
+  S.push(`<path class="dm" d="M${p0[0].toFixed(1)},${p0[1].toFixed(1)}A${r},${r} 0 0 ${a1>a0?1:0} ${p1[0].toFixed(1)},${p1[1].toFixed(1)}" marker-start="url(#ar)" marker-end="url(#ar)"/>`);
+  txt(cx+(r+16)*Math.cos(am),cy+(r+16)*Math.sin(am)+4,t);
+}
 function leader(x1,y1,x2,y2,t){const dx=x2>=x1?14:-14;S.push(`<polyline class="dm" points="${x1},${y1} ${x2},${y2} ${x2+dx},${y2}" marker-start="url(#ar)"/>`);if(t)txt(x2+dx+(dx>0?4:-4),y2+4,t,"dt",dx>0?"start":"end")}
 function cross(x,y,r){ln(x-r-5,y,x+r+5,y,"ctr");ln(x,y-r-5,x,y+r+5,"ctr")}
 function draw(p,n){
   S.length=0;
-  S.push(`<defs><marker id="ar" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="arh" d="M0,1.5 L10,5 L0,8.5 z"/></marker></defs>`);
+  S.push(`<defs><marker id="ar" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="arh" d="M0,1.5 L10,5 L0,8.5 z"/></marker><pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" class="hatchbg"/><line x1="0" y1="0" x2="0" y2="7" class="hatchln"/></pattern></defs>`);
   S.push(`<rect class="frame" x="10" y="10" width="740" height="480"/>`);
   const cx=300,a=Math.SQRT1_2;
   if(p.kind==="plate"){
@@ -1153,6 +1235,116 @@ function draw(p,n){
     S.push(`<polyline class="hid" points="${x0+ts},${y1} ${x0+ts},${yb-ts} ${x0+w-ts},${yb-ts} ${x0+w-ts},${y1}"/>`);
     sx.forEach(x=>{S.push(`<polyline class="hid" points="${x-R},${yb-ts} ${x-R},${yb-ts-hss} ${x+R},${yb-ts-hss} ${x+R},${yb-ts}"/>`);ln(x-rh,yb-ts-hss,x-rh,yb-ts,"hid");ln(x+rh,yb-ts-hss,x+rh,yb-ts,"hid")});
     dimV(y1,yb,x0+w,x0+w+46,fmt(p.H));dimV(yb-ts,yb,x0+w,x0+w+20,fmt(p.t));dimV(yb-ts-hss,yb-ts,sx[0]-R,x0-22,fmt(p.hs),x0);
+  }else if(p.kind==="mbracket"){
+    const s=Math.min(370/(p.L+p.W),225/(p.W+p.H));
+    const w=p.L*s,h=p.W*s,x0=70,y0=84,T=p.T*s,Hs=p.H*s,y1=y0+h+62,yb=y1+Hs,xu=x0+w-T,xr=x0+w+56,cyT=y0+h/2;
+    const Rb=p.Rb*s,cs=p.c*s,trs=p.tr*s,ras=p.ra*s,rbs=p.rbh*s,ws=p.w*s,sl=p.Ls/2*s,sx=x0+p.xs*s,sy=[cyT-p.ys*s,cyT+p.ys*s];
+    txt(x0,y0-50,"TOP","vt","start");
+    txt(x0+44,y0-57,(p.nr?`RIBS: 2× ${fmt(p.tr)} THICK, FLUSH WITH BOTH SIDES · LEGS ${fmt(p.ra)} × ${fmt(p.rbh)} FROM INSIDE CORNER`:"NO RIBS")+(p.Rb?` · 2 CORNERS R${fmt(p.Rb)}`:""),"vt","start");
+    S.push(Rb?`<path class="fillp" d="M${x0+Rb},${y0}H${x0+w}V${y0+h}H${x0+Rb}A${Rb},${Rb} 0 0 1 ${x0},${y0+h-Rb}V${y0+Rb}A${Rb},${Rb} 0 0 1 ${x0+Rb},${y0}Z"/>`:`<rect class="fillp" x="${x0}" y="${y0}" width="${w}" height="${h}"/>`);
+    ln(xu,y0,xu,y0+h);
+    if(p.c){ln(xu,y0+cs,x0+w,y0+cs);ln(xu,y0+h-cs,x0+w,y0+h-cs)}
+    if(p.nr)S.push(`<rect class="ln" x="${xu-ras}" y="${y0}" width="${ras}" height="${trs}"/>`,`<rect class="ln" x="${xu-ras}" y="${y0+h-trs}" width="${ras}" height="${trs}"/>`);
+    sy.forEach(y=>{S.push(`<path class="hole" d="M${sx-sl},${y-ws/2}H${sx+sl}A${ws/2},${ws/2} 0 0 1 ${sx+sl},${y+ws/2}H${sx-sl}A${ws/2},${ws/2} 0 0 1 ${sx-sl},${y-ws/2}Z"/>`);
+      ln(sx-sl-ws/2-5,y,sx+sl+ws/2+5,y,"ctr");ln(sx-sl,y-ws/2-4,sx-sl,y+ws/2+4,"ctr");ln(sx+sl,y-ws/2-4,sx+sl,y+ws/2+4,"ctr")});
+    dimH(x0,x0+w,y0,y0-34,fmt(p.L));dimH(x0,sx,y0,y0-14,fmt(p.xs));dimV(y0,y0+h,x0,x0-40,fmt(p.W));dimV(sy[0],sy[1],sx-sl-ws/2,x0-18,fmt(2*p.ys));
+    leader(sx+sl+ws/2*a,sy[0]-ws/2*a,xr,y0+6,`2× SLOT ${fmt(p.w)} WIDE`);txt(xr+18,y0+24,`${fmt(p.Ls)} CENTER TO CENTER`,"dt","start");
+    txt(x0,y1-12,"FRONT","vt","start");
+    S.push(`<polygon class="fillp" points="${x0},${yb} ${x0+w},${yb} ${x0+w},${yb-Hs} ${xu},${yb-Hs} ${xu},${yb-T} ${x0},${yb-T}"/>`);
+    if(p.nr)S.push(`<polygon class="fillp" points="${xu},${yb-T} ${xu-ras},${yb-T} ${xu},${yb-T-rbs}"/>`);
+    if(p.c)ln(xu,yb-Hs+cs,x0+w,yb-Hs+cs);
+    [sx-sl-ws/2,sx+sl+ws/2].forEach(x=>ln(x,yb-T,x,yb,"hid"));
+    const zc=yb-p.zh*s,Rc=p.Dcu/2*s,rd=p.du/2*s,dcs=p.dcu*s;
+    S.push(`<polyline class="hid" points="${x0+w},${zc-Rc} ${x0+w-dcs},${zc-Rc} ${x0+w-dcs},${zc-rd} ${xu},${zc-rd}"/>`,`<polyline class="hid" points="${x0+w},${zc+Rc} ${x0+w-dcs},${zc+Rc} ${x0+w-dcs},${zc+rd} ${xu},${zc+rd}"/>`);
+    ln(xu-6,zc,x0+w+6,zc,"ctr");
+    dimV(yb-Hs,yb,x0+w,x0+w+24,fmt(p.H));dimV(yb-T,yb,x0,x0-20,fmt(p.T));dimH(xu,x0+w,yb-Hs,yb-Hs-14,fmt(p.T));
+    txt(xr,y1-12,"RIGHT","vt","start");
+    S.push(`<polygon class="fillp" points="${xr},${yb} ${xr+h},${yb} ${xr+h},${yb-Hs+cs} ${xr+h-cs},${yb-Hs} ${xr+cs},${yb-Hs} ${xr},${yb-Hs+cs}"/>`);
+    if(p.nr){ln(xr+trs,yb-T,xr+trs,yb-T-rbs,"hid");ln(xr+h-trs,yb-T,xr+h-trs,yb-T-rbs,"hid")}
+    const xc=xr+h/2;circ(xc,zc,Rc);circ(xc,zc,rd);cross(xc,zc,Rc);
+    dimV(zc,yb,xr,xr-12,fmt(p.zh));
+    leader(xc+Rc*a,zc+Rc*a,xr+h+26,zc+Rc+12,`Ø${fmt(p.du)} THRU`);txt(xr+h+44,zc+Rc+30,`C'BORE Ø${fmt(p.Dcu)} × ${fmt(p.dcu)} DEEP`,"dt","start");
+    if(p.c)leader(xr+h-cs/2,yb-Hs+cs/2,xr+h+26,yb-Hs-20,`2× ${fmt(p.c)} × 45°`);
+  }else if(p.kind==="fhousing"){
+    const s=Math.min(250/p.S,205/(p.S+p.tf+p.hb)),Ss=p.S*s,cy0=86+Ss/2,X=v=>cx+v*s,Zt=p.tf+p.hb,y1=cy0+Ss/2+66,yb=y1+Zt*s,Y=z=>yb-z*s;
+    txt(cx-Ss/2,cy0-Ss/2-30,"TOP","vt","start");
+    txt(cx-Ss/2+44,cy0-Ss/2-30,p.mode==="slot"?`SLOT ${fmt(p.ws)} WIDE × ${fmt(p.hsl)} DEEP ACROSS THE BOSS`:`BOSS TOP EDGE CHAMFERED ${fmt(p.cb)} × 45°`,"vt","start");
+    S.push(`<rect class="fillp" x="${cx-Ss/2}" y="${cy0-Ss/2}" width="${Ss}" height="${Ss}" rx="${p.rc*s}"/>`);
+    const hp=[[-1,-1],[1,-1],[-1,1],[1,1]].map(([u,v])=>[cx+u*p.P/2*s,cy0+v*p.P/2*s]);
+    hp.forEach(([x,y])=>{circ(x,y,p.Dcb/2*s);circ(x,y,p.db/2*s);cross(x,y,p.Dcb/2*s)});
+    circ(cx,cy0,p.Db/2*s,"fillp");if(p.mode==="cham")circ(cx,cy0,(p.Db/2-p.cb)*s,"ln");circ(cx,cy0,p.D2/2*s,"ln");circ(cx,cy0,p.d/2*s);
+    if(p.mode==="slot"){const xo=Math.sqrt((p.Db/2)**2-(p.ws/2)**2)*s,xi=Math.sqrt((p.D2/2)**2-(p.ws/2)**2)*s;[-1,1].forEach(g=>{const y=cy0+g*p.ws/2*s;ln(cx-xo,y,cx-xi,y);ln(cx+xi,y,cx+xo,y)})}
+    ln(cx,cy0-Ss/2-6,cx,cy0+Ss/2+6,"ctr");
+    S.push(`<line class="cut" x1="${cx-Ss/2-20}" y1="${cy0}" x2="${cx+Ss/2+20}" y2="${cy0}"/>`);
+    [cx-Ss/2-20,cx+Ss/2+20].forEach(x=>{S.push(`<line class="dm" x1="${x}" y1="${cy0}" x2="${x}" y2="${cy0+16}" marker-end="url(#ar)"/>`);txt(x,cy0-7,"A","lbl")});
+    dimH(hp[0][0],hp[1][0],hp[0][1],cy0-Ss/2-14,fmt(p.P));
+    leader(cx+Ss/2-p.rc*s*(1-a),cy0-Ss/2+p.rc*s*(1-a),cx+Ss/2+34,cy0-Ss/2-6,`4× R${fmt(p.rc)}`);
+    leader(hp[3][0]+p.Dcb/2*s*a,hp[3][1]+p.Dcb/2*s*a,cx+Ss/2+34,cy0+Ss/2-4,`4× Ø${fmt(p.db)} THRU`);
+    txt(cx+Ss/2+52,cy0+Ss/2+14,`C'BORE Ø${fmt(p.Dcb)} × ${fmt(p.dcb)} DEEP`,"dt","start");
+    txt(cx-Ss/2,y1-40,"SECTION A-A","lbl","start");
+    const top=p.mode==="slot"?[[-p.D2/2,Zt-p.hsl],[-p.Db/2,Zt-p.hsl]]:[[-p.D2/2,Zt],[-p.Db/2+p.cb,Zt],[-p.Db/2,Zt-p.cb]];
+    const left=[[-p.S/2,0],[-p.d/2,0],[-p.d/2,Zt-p.h2],[-p.D2/2,Zt-p.h2],...top,[-p.Db/2,p.tf],[-p.S/2,p.tf]],right=left.map(([x,z])=>[-x,z]).reverse();
+    [left,right].forEach(q=>S.push(`<polygon class="hatch" points="${q.map(([x,z])=>`${X(x).toFixed(1)},${Y(z).toFixed(1)}`).join(" ")}"/>`));
+    if(p.mode==="slot"){const xo=Math.sqrt((p.Db/2)**2-(p.ws/2)**2);ln(X(-xo),Y(Zt),X(xo),Y(Zt));ln(X(-xo),Y(Zt),X(-xo),Y(Zt-p.hsl));ln(X(xo),Y(Zt),X(xo),Y(Zt-p.hsl))}
+    ln(cx,Y(Zt)-10,cx,yb+10,"ctr");
+    dimH(X(-p.S/2),X(p.S/2),yb,yb+22,fmt(p.S));dimV(Y(p.tf),yb,X(-p.S/2),X(-p.S/2)-20,fmt(p.tf));
+    dimV(Y(Zt),Y(p.tf),X(p.Db/2),X(p.S/2)+24,fmt(p.hb),X(p.S/2));dimH(X(-p.Db/2),X(p.Db/2),Y(Zt),Y(Zt)-18,`Ø${fmt(p.Db)}`);
+    leader(X(p.D2/2),Y(Zt-p.h2/2),X(p.S/2)+30,Y(Zt)+4,`Ø${fmt(p.D2)} × ${fmt(p.h2)} DEEP`);
+    leader(X(p.d/2),Y((Zt-p.h2)*0.45),X(p.S/2)+30,Y(p.tf)+20,`Ø${fmt(p.d)} THRU`);
+  }else if(p.kind==="wheel"){
+    const s=Math.min(250/p.Do,500/(p.Do+p.Lh)),R=p.Do/2*s,fx=70+R,fy=100+R,sx0=fx+R+90,zc=sx0+p.Lh/2*s,X=z=>zc+z*s,Y=r=>fy-r*s;
+    txt(fx-R,fy-R-30,"FRONT","vt","start");
+    txt(fx-R,26,`WEB ${fmt(p.tw)} THICK, CENTERED · ${p.N} HOLES EQUALLY SPACED · RIM CHAMFERS ${fmt(p.c)} × 45° BOTH SIDES`+(p.Lh===p.Lr?" · HUB SAME WIDTH AS RIM":""),"vt","start");
+    circ(fx,fy,R,"fillp");circ(fx,fy,R-p.c*s,"ln");circ(fx,fy,p.Di/2*s,"ln");circ(fx,fy,p.Dh/2*s,"ln");circ(fx,fy,p.Pd/2*s,"ctr");
+    const hp=[];for(let k=0;k<p.N;k++){const f=-Math.PI/2+Math.PI/p.N+2*Math.PI*k/p.N;hp.push([fx+p.Pd/2*s*Math.cos(f),fy+p.Pd/2*s*Math.sin(f)])}
+    hp.forEach(([x,y])=>{circ(x,y,p.dl/2*s);cross(x,y,p.dl/2*s)});
+    const rb=p.d/2*s,bk=p.b/2*s,ky=(p.d/2+p.t2)*s,yk0=Math.sqrt(rb*rb-bk*bk);
+    S.push(`<path class="hole" d="M${fx-bk},${fy-yk0}V${fy-ky}H${fx+bk}V${fy-yk0}A${rb},${rb} 0 1 1 ${fx-bk},${fy-yk0}Z"/>`);
+    ln(fx-R-6,fy,fx+R+6,fy,"ctr");
+    S.push(`<line class="cut" x1="${fx}" y1="${fy-R-16}" x2="${fx}" y2="${fy+R+16}"/>`);
+    [fy-R-16,fy+R+16].forEach(y=>{S.push(`<line class="dm" x1="${fx}" y1="${y}" x2="${fx-18}" y2="${y}" marker-end="url(#ar)"/>`);txt(fx+10,y+5,"A","lbl")});
+    dimH(fx-bk,fx+bk,fy-ky,fy-R-12,fmt(p.b));dimV(fy-ky,fy+rb,fx+bk,fx+R+26,fmt(p.K),fx);
+    const hl=hp.reduce((q,v)=>v[1]>q[1]+0.01?v:q);
+    const lx=Math.max(hl[0]+p.dl/2*s+16,fx+R*0.35);
+    leader(hl[0]+p.dl/2*s*a,hl[1]+p.dl/2*s*a,lx,fy+R+26,`${p.N}× Ø${fmt(p.dl)} THRU WEB`);txt(lx+18,fy+R+44,`EQ SP ON Ø${fmt(p.Pd)} BC`,"dt","start");
+    leader(fx+rb*a,fy+rb*a,fx+R*0.35,fy+R+4,`Ø${fmt(p.d)} BORE`);
+    txt(sx0,Y(p.Do/2)-50,"SECTION A-A","lbl","start");
+    const half=(ri,g)=>[[-p.Lh/2,ri],[p.Lh/2,ri],[p.Lh/2,p.Dh/2],[p.tw/2,p.Dh/2],[p.tw/2,p.Di/2],[p.Lr/2,p.Di/2],[p.Lr/2,p.Do/2-p.c],[p.Lr/2-p.c,p.Do/2],[-p.Lr/2+p.c,p.Do/2],[-p.Lr/2,p.Do/2-p.c],[-p.Lr/2,p.Di/2],[-p.tw/2,p.Di/2],[-p.tw/2,p.Dh/2],[-p.Lh/2,p.Dh/2]].map(([z,r])=>`${X(z).toFixed(1)},${Y(g*r).toFixed(1)}`).join(" ");
+    S.push(`<polygon class="hatch" points="${half(p.d/2+p.t2,1)}"/>`,`<polygon class="hatch" points="${half(p.d/2,-1)}"/>`);
+    ln(X(-p.Lh/2),Y(p.d/2),X(p.Lh/2),Y(p.d/2));ln(X(-p.Lh/2)-8,fy,X(p.Lh/2)+8,fy,"ctr");
+    dimH(X(-p.Lr/2),X(p.Lr/2),Y(p.Do/2),Y(p.Do/2)-14,fmt(p.Lr));if(p.Lh!==p.Lr)dimH(X(-p.Lh/2),X(p.Lh/2),Y(p.Dh/2),Y(p.Do/2)-32,fmt(p.Lh));
+    const xe=X(p.Lh/2);
+    dimV(Y(p.Dh/2),Y(-p.Dh/2),X(p.Lh/2),xe+16,`Ø${fmt(p.Dh)}`);dimV(Y(p.Di/2),Y(-p.Di/2),X(p.Lr/2),xe+36,`Ø${fmt(p.Di)}`);dimV(Y(p.Do/2),Y(-p.Do/2),X(p.Lr/2),xe+56,`Ø${fmt(p.Do)}`);
+  }else if(p.kind==="abracket"){
+    const t=p.th*Math.PI/180,ct=Math.cos(t),st=Math.sin(t),Xr=Math.max(...p.pts.map(q=>q[0])),Zr=Math.max(...p.pts.map(q=>q[1]));
+    const s=Math.min(300/Xr,205/(p.W+Zr),470/(Xr+p.Li)),x0=66,y0=84,h=p.W*s,y1=y0+h+62,yb=y1+Zr*s,X=v=>x0+v*s,Z=v=>yb-v*s,cyT=y0+h/2,Rb=p.Rb*s;
+    txt(x0,y0-50,"TOP","vt","start");
+    txt(x0+44,y0-57,`THICKNESS ${fmt(p.T)} THROUGHOUT · ANGLED-FACE HOLES ARE SQUARE TO THAT FACE`+(p.Rb?` · 2 CORNERS R${fmt(p.Rb)}`:""),"vt","start");
+    S.push(Rb?`<path class="fillp" d="M${x0+Rb},${y0}H${X(Xr)}V${y0+h}H${x0+Rb}A${Rb},${Rb} 0 0 1 ${x0},${y0+h-Rb}V${y0+Rb}A${Rb},${Rb} 0 0 1 ${x0+Rb},${y0}Z"/>`:`<rect class="fillp" x="${x0}" y="${y0}" width="${X(Xr)-x0}" height="${h}"/>`);
+    ln(X(p.Qx),y0,X(p.Qx),y0+h);ln(X(p.pts[3][0]),y0,X(p.pts[3][0]),y0+h);ln(X(p.L),y0,X(p.L),y0+h,"hid");
+    [cyT-p.yb*s,cyT+p.yb*s].forEach(y=>{circ(X(p.xb),y,p.db/2*s);cross(X(p.xb),y,p.db/2*s)});
+    const uc=p.Li-p.si,ix=p.L-p.T*st+uc*ct,iys=p.ni===2?[cyT-p.yi*s,cyT+p.yi*s]:[cyT];
+    iys.forEach(y=>S.push(`<ellipse class="hole" cx="${X(ix)}" cy="${y}" rx="${p.di/2*ct*s}" ry="${p.di/2*s}"/>`));
+    dimH(x0,X(p.xb),y0,y0-14,fmt(p.xb));dimV(y0,y0+h,x0,x0-40,fmt(p.W));dimV(cyT-p.yb*s,cyT+p.yb*s,X(p.xb),x0-18,fmt(2*p.yb));
+    leader(X(p.xb)+p.db/2*s*a,cyT+p.yb*s+p.db/2*s*a,X(p.xb)+36,y0+h+22,`2× Ø${fmt(p.db)} THRU`);
+    txt(x0,y1-12,"FRONT","vt","start");
+    S.push(`<polygon class="fillp" points="${p.pts.map(([x,z])=>`${X(x).toFixed(1)},${Z(z).toFixed(1)}`).join(" ")}"/>`);
+    [p.xb-p.db/2,p.xb+p.db/2].forEach(x=>ln(X(x),Z(0),X(x),Z(p.T),"hid"));
+    const O=u=>[p.L+u*ct,u*st],I=u=>[p.L+u*ct-p.T*st,u*st+p.T*ct];
+    [uc-p.di/2,uc+p.di/2].forEach(u=>{const o=O(u),i=I(u);ln(X(o[0]),Z(o[1]),X(i[0]),Z(i[1]),"hid")});
+    {const o=O(uc),i=I(uc),e=6/s;ln(X(o[0]+st*e),Z(o[1]-ct*e),X(i[0]-st*e),Z(i[1]+ct*e),"ctr")}
+    dimH(X(0),X(p.L),Z(0),Z(0)+22,fmt(p.L));dimV(Z(p.T),Z(0),X(0),X(0)-20,fmt(p.T));
+    dimA(X(p.L),Z(0),X(p.pts[2][0]),Z(p.pts[2][1]),-24,fmt(p.Li));
+    ln(X(p.L)+3,Z(0),X(p.L)+46,Z(0),"dm");dimAng(X(p.L),Z(0),34,-p.th,0,`${p.th}°`);
+    {const im=I(p.Li*0.55),ax=X(im[0]),ay=Z(im[1]);S.push(`<line class="dm" x1="${ax-st*46}" y1="${ay-ct*46}" x2="${ax-st*8}" y2="${ay-ct*8}" marker-end="url(#ar)"/>`);txt(ax-st*56,ay-ct*56+5,"A","lbl")}
+    const aw=p.Li*s,ax0=X(Xr)+64,ay0=Math.max(y0+20,y1+(Zr*s-h)/2);
+    txt(ax0,ay0-62,"VIEW A","lbl","start");txt(ax0+62,ay0-62,"TRUE SIZE OF ANGLED FACE","vt","start");
+    txt(ax0,ay0-44,`${p.ni}× Ø${fmt(p.di)} THRU, SQUARE TO FACE`,"dt","start");
+    rect(ax0,ay0,aw,h);ln(ax0,ay0,ax0,ay0+h,"hid");txt(ax0,ay0+h+14,"BEND","vt","start");txt(ax0+aw,ay0+h+14,"FREE END","vt","end");
+    const ahy=p.ni===2?[ay0+h/2-p.yi*s,ay0+h/2+p.yi*s]:[ay0+h/2],ahx=ax0+uc*s;
+    ahy.forEach(y=>{circ(ahx,y,p.di/2*s);cross(ahx,y,p.di/2*s)});
+    dimH(ahx,ax0+aw,ay0,ay0-12,fmt(p.si));
+    if(p.ni===2)dimV(ahy[0],ahy[1],ahx,ax0+aw+18,fmt(2*p.yi),ax0+aw);
   }else{
     const s=Math.min(440/p.L,240/(p.W+p.H));
     const w=p.L*s,wd=p.W*s,x0=cx-w/2,y0=80,t=p.T*s,y1=y0+wd+60,yb=y1+p.H*s,hr=p.d/2*s;
