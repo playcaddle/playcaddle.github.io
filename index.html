@@ -1652,7 +1652,7 @@ function openZoom(){
   $("zArea").innerHTML=$("dwg").outerHTML.replace('id="dwg"','id="dwgZ"').replace(/id="ar"/g,'id="arz"').replace(/url\(#ar\)/g,"url(#arz)");
   $("dwgZ").classList.remove("veiled");setZoom();
   $("zTitle").textContent=$("kindPill").textContent;$("zoomer").hidden=false;document.body.style.overflow="hidden";
-  const za=$("zArea");za.scrollLeft=0;za.scrollTop=0;
+  const za=$("zArea");za.scrollTop=0;za.scrollLeft=Math.max(0,zw*300/760-za.clientWidth/2); // views are centered at x=300 of the 760-wide sheet
 }
 function closeZoom(){$("zoomer").hidden=true;$("zArea").innerHTML="";document.body.style.overflow=""}
 $("dwg").addEventListener("click",()=>{if(innerWidth<=700)openZoom()});
