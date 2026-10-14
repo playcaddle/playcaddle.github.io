@@ -132,7 +132,8 @@ button:disabled{opacity:.4;cursor:default}
 .veil div{display:grid;gap:10px;justify-items:center;max-width:38ch}
 .veil strong{font-family:var(--f-display);font-size:1.7rem;line-height:1.1}
 .veil span{color:var(--muted)}
-.ribbon{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;pointer-events:none}
+.sheet{display:flex;flex-direction:column}
+.ribbon{position:static;order:-1;padding:10px 10px 0;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;pointer-events:none}
 .pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:.75rem;letter-spacing:.04em;padding:4px 10px;border-radius:999px;background:var(--hue);color:#fff;font-weight:500}
 .pill.muted{background:var(--soft);color:var(--ink)}
 .panel{display:grid;gap:14px;min-width:0}
@@ -244,8 +245,7 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
 .modal .tomorrow b{font-family:var(--f-display);font-size:1.25rem}
 .zoomhint{display:none;text-align:center;font-size:.8rem;color:var(--muted);padding:2px 8px 10px;cursor:pointer}
 @media (max-width:700px){
-  .sheet{display:flex;flex-direction:column}
-  .ribbon{position:static;order:-1;padding:8px 8px 6px;pointer-events:auto}
+  .ribbon{padding:8px 8px 6px;pointer-events:auto}
   .sheet svg:not(.veiled){cursor:zoom-in}
   .zoomhint{display:block}
 }
@@ -1120,7 +1120,7 @@ function draw(p,n){
     S.push(`<polygon class="fillp" points="${x0},${y1+bs} ${x0+w},${y1+bs} ${x0},${y1}"/>`);
     ln(xh-r,y1+bs,xh-r,y1+bs-hAt(xh-r),"hid");ln(xh+r,y1+bs,xh+r,y1+bs-hAt(xh+r),"hid");ln(xh,y1+bs+6,xh,y1+bs-hAt(xh)-6,"ctr");
     dimH(x0,x0+w,y1+bs,y1+bs+22,fmt(p.a));dimV(y1,y1+bs,x0,x0-22,fmt(p.b));
-    txt(x0+44,y0-57,"FLAT SLOPE FROM TOP OF TALL END TO THIN EDGE · HOLE VERTICAL, ON CENTERLINE","vt","start");
+    txt(x0+44,y0-57,"FLAT SLOPE, TALL END TO THIN EDGE · VERTICAL HOLE ON CENTERLINE","vt","start");
   }else if(p.kind==="spring"){
     const Lax=p.n*p.pt,s=Math.min(380/(Lax+p.d),170/(p.Dm+p.d)),Rm=p.Dm/2*s,ws=p.d*s,cy0=180,xs=Math.max(80,cx-(Lax*s+60+2*Rm)/2),xe=xs+Lax*s;
     txt(xs-ws,cy0-Rm-44,"FRONT","vt","start");
@@ -1311,7 +1311,8 @@ function draw(p,n){
   }else if(p.kind==="wheel"){
     const s=Math.min(250/p.Do,500/(p.Do+p.Lh)),R=p.Do/2*s,fx=70+R,fy=100+R,sx0=fx+R+90,zc=sx0+p.Lh/2*s,X=z=>zc+z*s,Y=r=>fy-r*s;
     txt(fx-R,fy-R-30,"FRONT","vt","start");
-    txt(fx-R,26,`WEB ${fmt(p.tw)} THICK, CENTERED · ${p.N} HOLES EQUALLY SPACED · RIM CHAMFERS ${fmt(p.c)} × 45° BOTH SIDES`+(p.Lh===p.Lr?" · HUB SAME WIDTH AS RIM":""),"vt","start");
+    txt(fx-R,22,`WEB CENTERED · ${p.N} HOLES EQUALLY SPACED`+(p.Lh===p.Lr?" · HUB SAME WIDTH AS RIM":""),"vt","start");
+    txt(fx-R,36,`RIM CHAMFERS ${fmt(p.c)} × 45° BOTH SIDES`,"vt","start");
     circ(fx,fy,R,"fillp");circ(fx,fy,R-p.c*s,"ln");circ(fx,fy,p.Di/2*s,"ln");circ(fx,fy,p.Dh/2*s,"ln");circ(fx,fy,p.Pd/2*s,"ctr");
     const hp=[];for(let k=0;k<p.N;k++){const f=-Math.PI/2+Math.PI/p.N+2*Math.PI*k/p.N;hp.push([fx+p.Pd/2*s*Math.cos(f),fy+p.Pd/2*s*Math.sin(f)])}
     hp.forEach(([x,y])=>{circ(x,y,p.dl/2*s);cross(x,y,p.dl/2*s)});
@@ -1319,7 +1320,7 @@ function draw(p,n){
     S.push(`<path class="hole" d="M${fx-bk},${fy-yk0}V${fy-ky}H${fx+bk}V${fy-yk0}A${rb},${rb} 0 1 1 ${fx-bk},${fy-yk0}Z"/>`);
     ln(fx-R-6,fy,fx+R+6,fy,"ctr");
     S.push(`<line class="cut" x1="${fx}" y1="${fy-R-16}" x2="${fx}" y2="${fy+R+16}"/>`);
-    [fy-R-16,fy+R+16].forEach(y=>{S.push(`<line class="dm" x1="${fx}" y1="${y}" x2="${fx-18}" y2="${y}" marker-end="url(#ar)"/>`);txt(fx+10,y+5,"A","lbl")});
+    [fy-R-16,fy+R+16].forEach(y=>{S.push(`<line class="dm" x1="${fx}" y1="${y}" x2="${fx-18}" y2="${y}" marker-end="url(#ar)"/>`);txt(fx-30,y+5,"A","lbl")});
     dimH(fx-bk,fx+bk,fy-ky,fy-R-12,fmt(p.b));dimV(fy-ky,fy+rb,fx+bk,fx+R+26,fmt(p.K),fx);
     const hl=hp.reduce((q,v)=>v[1]>q[1]+0.01?v:q);
     const lx=Math.max(hl[0]+p.dl/2*s+16,fx+R*0.35);
@@ -1328,6 +1329,7 @@ function draw(p,n){
     txt(sx0,Y(p.Do/2)-50,"SECTION A-A","lbl","start");
     const half=(ri,g)=>[[-p.Lh/2,ri],[p.Lh/2,ri],[p.Lh/2,p.Dh/2],[p.tw/2,p.Dh/2],[p.tw/2,p.Di/2],[p.Lr/2,p.Di/2],[p.Lr/2,p.Do/2-p.c],[p.Lr/2-p.c,p.Do/2],[-p.Lr/2+p.c,p.Do/2],[-p.Lr/2,p.Do/2-p.c],[-p.Lr/2,p.Di/2],[-p.tw/2,p.Di/2],[-p.tw/2,p.Dh/2],[-p.Lh/2,p.Dh/2]].map(([z,r])=>`${X(z).toFixed(1)},${Y(g*r).toFixed(1)}`).join(" ");
     S.push(`<polygon class="hatch" points="${half(p.d/2+p.t2,1)}"/>`,`<polygon class="hatch" points="${half(p.d/2,-1)}"/>`);
+    {const yw=Y(-(p.Dh/2+p.Di/2)/2);dimH(X(-p.tw/2),X(p.tw/2),yw,yw,fmt(p.tw))} // web thickness, shown in the section
     ln(X(-p.Lh/2),Y(p.d/2),X(p.Lh/2),Y(p.d/2));ln(X(-p.Lh/2)-8,fy,X(p.Lh/2)+8,fy,"ctr");
     dimH(X(-p.Lr/2),X(p.Lr/2),Y(p.Do/2),Y(p.Do/2)-14,fmt(p.Lr));if(p.Lh!==p.Lr)dimH(X(-p.Lh/2),X(p.Lh/2),Y(p.Dh/2),Y(p.Do/2)-32,fmt(p.Lh));
     const xe=X(p.Lh/2);
