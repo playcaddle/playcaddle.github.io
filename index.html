@@ -828,7 +828,19 @@ const S=[];
 const ln=(x1,y1,x2,y2,c="ln")=>S.push(`<line class="${c}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`);
 const rect=(x,y,w,h,c="fillp")=>S.push(`<rect class="${c}" x="${x}" y="${y}" width="${w}" height="${h}"/>`);
 const circ=(x,y,r,c="hole")=>S.push(`<circle class="${c}" cx="${x}" cy="${y}" r="${r}"/>`);
-const txt=(x,y,t,c="dt",a="middle",rot)=>S.push(`<text class="${c}" x="${x}" y="${y}" text-anchor="${a}"${rot?` transform="rotate(${rot} ${x} ${y})"`:""}>${t}</text>`);
+const txt0=(x,y,t,c="dt",a="middle",rot)=>S.push(`<text class="${c}" x="${x}" y="${y}" text-anchor="${a}"${rot?` transform="rotate(${rot} ${x} ${y})"`:""}>${t}</text>`);
+// Notes near the bottom wrap at the " · " separators so they never run into the title block (x ≥ 470, y ≥ 400).
+const txt=(x,y,t,c="dt",a="middle",rot)=>{
+  const str=String(t),cw=6.8,lim=462;
+  if(c==="vt"&&a==="start"&&!rot&&y>392&&y<480&&x+str.length*cw>lim&&str.includes(" · ")){
+    const parts=str.split(" · "),lines=[];let cur="";
+    for(const p of parts){const next=cur?cur+" · "+p:p;if(cur&&x+next.length*cw>lim){lines.push(cur);cur=p}else cur=next}
+    lines.push(cur);
+    const y0=Math.min(y,472-(lines.length-1)*13);
+    lines.forEach((l,i)=>txt0(x,y0+i*13,l,c,a));return;
+  }
+  txt0(x,y,t,c,a,rot);
+};
 function dimH(xa,xb,yRef,yDim,t){const s=Math.sign(yDim-yRef)||-1;ln(xa,yRef+3*s,xa,yDim+5*s,"dm");ln(xb,yRef+3*s,xb,yDim+5*s,"dm");S.push(`<line class="dm" x1="${xa}" y1="${yDim}" x2="${xb}" y2="${yDim}" marker-start="url(#ar)" marker-end="url(#ar)"/>`);if(Math.abs(xb-xa)<16)txt(Math.max(xa,xb)+6,yDim+4,t,"dt","start");else txt((xa+xb)/2,yDim-4,t)}
 function dimV(ya,yb,xRefA,xDim,t,xRefB){if(xRefB===undefined)xRefB=xRefA;const s=Math.sign(xDim-xRefA)||-1;ln(xRefA+3*s,ya,xDim+5*s,ya,"dm");ln(xRefB+3*s,yb,xDim+5*s,yb,"dm");S.push(`<line class="dm" x1="${xDim}" y1="${ya}" x2="${xDim}" y2="${yb}" marker-start="url(#ar)" marker-end="url(#ar)"/>`);if(Math.abs(yb-ya)<16){const lf=xDim<xRefA;txt(lf?xDim-5:xDim+5,(ya+yb)/2+4,t,"dt",lf?"end":"start")}else txt(xDim-4,(ya+yb)/2,t,"dt","middle",-90)}
 function dimA(x1,y1,x2,y2,off,t){ // dimension parallel to a sloped edge; off>0 is to the left of p1->p2
@@ -865,7 +877,7 @@ function draw(p,n){
     [x0+es,x0+w-es].forEach(x=>{ln(x-hr,y1,x-hr,y1+t,"hid");ln(x+hr,y1,x+hr,y1+t,"hid");ln(x,y1-6,x,y1+t+6,"ctr")});
     if(p.D){const R=p.D/2*s;ln(cx-R,y1,cx-R,y1+t,"hid");ln(cx+R,y1,cx+R,y1+t,"hid");ln(cx,y1-6,cx,y1+t+6,"ctr")}
     dimV(y1,y1+t,x0+w,x0+w+22,fmt(p.T));
-    txt(x0,y1+t+34,"HOLE PATTERN SYMMETRIC ABOUT PART CENTER","vt","start");
+    txt(x0,y1+t+34,"HOLES SYMMETRIC ABOUT PART CENTER","vt","start");
   }else if(p.kind==="bushing"){
     const H=p.H1+p.H2,s=Math.min(280/p.D1,220/(p.D1+H));
     const r1=p.D1/2*s,r2=p.D2/2*s,rb=p.d/2*s,cy=80+r1,y1=80+2*r1+60,yb=y1+H*s,yf=y1+p.H2*s;
@@ -998,7 +1010,7 @@ function draw(p,n){
       S.push(`<polyline class="hid" points="${x+Rc},${y1} ${x+Rc},${y1+dcs} ${x+hr},${y1+dcs} ${x+hr},${y1+t}"/>`);
       ln(x,y1-6,x,y1+t+6,"ctr")});
     dimV(y1,y1+t,x0+w,x0+w+22,fmt(p.T));
-    txt(x0,y1+t+30,"HOLE PATTERN SYMMETRIC ABOUT PART CENTER","vt","start");
+    txt(x0,y1+t+30,"HOLES SYMMETRIC ABOUT PART CENTER","vt","start");
   }else if(p.kind==="cham"){
     const s=Math.min(440/p.L,235/(p.W+p.H));
     const w=p.L*s,h=p.W*s,x0=cx-w/2,y0=80,c=p.c*s,hs=p.H*s,y1=y0+h+60,rb=p.d/2*s,cy0=y0+h/2;
@@ -1353,10 +1365,13 @@ function draw(p,n){
     [uc-p.di/2,uc+p.di/2].forEach(u=>{const o=O(u),i=I(u);ln(X(o[0]),Z(o[1]),X(i[0]),Z(i[1]),"hid")});
     {const o=O(uc),i=I(uc),e=6/s;ln(X(o[0]+st*e),Z(o[1]-ct*e),X(i[0]-st*e),Z(i[1]+ct*e),"ctr")}
     dimH(X(0),X(p.L),Z(0),Z(0)+22,fmt(p.L));dimV(Z(p.T),Z(0),X(0),X(0)-20,fmt(p.T));
-    dimA(X(p.L),Z(0),X(p.pts[2][0]),Z(p.pts[2][1]),-24,fmt(p.Li));
+    dimA(X(p.L),Z(0),X(p.pts[2][0]),Z(p.pts[2][1]),-44,fmt(p.Li)); // far enough out to clear the angle label
     ln(X(p.L)+3,Z(0),X(p.L)+46,Z(0),"dm");dimAng(X(p.L),Z(0),34,-p.th,0,`${p.th}°`);
     {const im=I(p.Li*0.55),ax=X(im[0]),ay=Z(im[1]);S.push(`<line class="dm" x1="${ax-st*46}" y1="${ay-ct*46}" x2="${ax-st*8}" y2="${ay-ct*8}" marker-end="url(#ar)"/>`);txt(ax-st*56,ay-ct*56+5,"A","lbl")}
-    const aw=p.Li*s,ax0=X(Xr)+64,ay0=Math.max(y0+20,y1+(Zr*s-h)/2);
+    const aw=p.Li*s,ay0=Math.max(y0+20,Math.min(y1+(Zr*s-h)/2,380-h)); // keep View A labels above the title block
+     // if View A's callout lands on the same row as the top view's hole callout, start View A after it
+     const leadEnd=X(p.xb)+36+18+`2× Ø${fmt(p.db)} THRU`.length*7.3,cw=`${p.ni}× Ø${fmt(p.di)} THRU, SQUARE TO FACE`.length*7.3;
+     let ax0=X(Xr)+64;if(Math.abs((ay0-44)-(y0+h+22))<18)ax0=Math.min(Math.max(ax0,leadEnd+20),744-Math.max(cw,aw+(p.ni===2?40:0)));
     txt(ax0,ay0-62,"VIEW A","lbl","start");txt(ax0+62,ay0-62,"TRUE SIZE OF ANGLED FACE","vt","start");
     txt(ax0,ay0-44,`${p.ni}× Ø${fmt(p.di)} THRU, SQUARE TO FACE`,"dt","start");
     rect(ax0,ay0,aw,h);ln(ax0,ay0,ax0,ay0+h,"hid");txt(ax0,ay0+h+14,"BEND","vt","start");txt(ax0+aw,ay0+h+14,"FREE END","vt","end");
