@@ -412,7 +412,7 @@ pre.share{margin:0;font-family:var(--f-mono);font-size:.95rem;line-height:1.55;b
       <div class="card help">
         <div class="eyebrow" id="helpTitle">Getting mass in Onshape</div>
         <ol id="helpSteps"></ol>
-        <p>Check that the mass is shown in grams. If your program lists density in kg/m³, multiply the title-block value by 1000.</p>
+        <p>Check that the mass is shown in grams.</p>
       </div>
     </div>
   </div>
@@ -571,12 +571,15 @@ const SKILL_INFO={
   "Auxiliary views":"Read a view drawn square to an angled face, so holes on that face show their true size and position.",
   "Angled sketch plane":"Sketch on an angled face (or a plane built from it) so holes go in perpendicular to that face."
 };
+// Help steps use the current part's density. The material NAME never matters, only the density.
 const HELP = {
-  Onshape:["Right-click the part in the parts list and choose Assign material.","Pick Custom and enter the density from the title block (g/cm³).","Open Mass properties from the right-side panel and read the mass."],
-  Fusion:["Right-click the body in the browser and choose Physical Material.","Duplicate a material and set its density to the title-block value.","Right-click the body, choose Properties, and read the mass."],
-  SOLIDWORKS:["Right-click Material in the feature tree and choose Edit Material.","Copy a library material into Custom Materials and set Mass Density. SOLIDWORKS uses kg/m³, so 1.04 g/cm³ is 1040.","Go to Evaluate › Mass Properties and read the mass. If it isn't in grams, click Options › Use custom settings."],
-  Other:["Set the part's density to the title-block value.","Open your program's mass or physical properties tool.","Or read the volume in mm³ and multiply: mass (g) = volume ÷ 1000 × density."]
+  Onshape:r=>[`You don't need ${r.name} in the library. Any material works once its density is right.`,"Right-click the part in the parts list › Assign material › Custom.",`Enter density ${r.g} g/cm³, then open Mass properties (right-side panel) and read the mass.`],
+  Fusion:r=>[`You don't need ${r.name} in the library. Any material works once its density is right.`,"Right-click the body › Physical Material, duplicate any material and edit it.",`Set density to ${r.g} g/cm³ (${r.kg} kg/m³), then right-click the body › Properties and read the mass.`],
+  SOLIDWORKS:r=>[`You don't need ${r.name} in the library. Any material works once its density is right.`,"Right-click Material › Edit Material, copy any material (e.g. ABS) into Custom Materials.",`Set Mass Density to ${r.kg} kg/m³ (= ${r.g} g/cm³), Apply, then Evaluate › Mass Properties.`],
+  Other:r=>[`Set the part's density to ${r.g} g/cm³ (${r.kg} kg/m³). The material name doesn't matter.`,"Open your program's mass or physical properties tool and read the mass in grams."]
 };
+// Works in every program: skip materials and use the volume.
+const helpShortcut=r=>`Shortcut: skip materials. Read the volume in mm³ and use mass (g) = volume ÷ 1000 × ${r.g}.`;
 
 // ---------- storage ----------
 const store = {
@@ -1515,7 +1518,7 @@ function render(){
   }else{clearInterval(nextId)}
   document.querySelectorAll("#sw button").forEach(b=>{b.setAttribute("aria-pressed",b.dataset.sw===software);b.disabled=st.done});
   $("helpTitle").textContent=software==="Other"?"Getting mass in other programs":`Getting mass in ${software}`;
-  $("helpSteps").innerHTML=HELP[software].map(s=>`<li>${s}</li>`).join("");
+  {const r={name:part.mat.name,g:part.mat.rho.toFixed(2),kg:Math.round(part.mat.rho*1000)};$("helpSteps").innerHTML=[...HELP[software](r),helpShortcut(r)].map(s=>`<li>${s}</li>`).join("")}
 }
 
 function startNextCountdown(){
