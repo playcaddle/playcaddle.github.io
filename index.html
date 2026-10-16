@@ -1177,6 +1177,9 @@ function draw(p,n){
     dimH(cx-A,cx+A,yb,yb+22,`Ø${fmt(p.Db)}`);dimV(yb-hbs,yb,cx+A,cx+A+22,fmt(p.hb));dimV(y1,yb,cx,cx+A+50,fmt(p.hb+p.hc),cx+A);
     leader(cx-r,yb-deps*0.6,cx-A-40,yb-deps-18,"");txt(cx-A-40,yb-deps-22,`Ø${fmt(p.d)} × ${fmt(p.dep)} DEEP`,"dt","end");txt(cx-A-40,yb-deps-8,"FROM BOTTOM","dt","end");
     txt(cx-A,yb+46,"SPHERICAL DOME THROUGH BASE EDGE AND TOP · FLAT-BOTTOM HOLE","vt","start");
+    // reference radius of the dome (parentheses = reference; it follows from Ø and height)
+    {const cyS=yb-hbs-hcs+Rs*s,th=Math.asin(Math.min(0.55*a2/Rs,0.95)),px=cx+Rs*s*Math.sin(th),py=cyS-Rs*s*Math.cos(th);
+     leader(px,py,cx+A*0.55+24,y1-20,`(SR${Number(Rs.toFixed(2))})`)}
   }else if(p.kind==="draft"){
     const tn=Math.tan(p.th*Math.PI/180),s=Math.min(440/p.L,230/(p.W+p.T+p.hb));
     const w=p.L*s,h=p.W*s,x0=cx-w/2,y0=80,Ts=p.T*s,hbs=p.hb*s,Lbs=p.Lb*s,Wbs=p.Wb*s,e=p.hb*tn*s,bx=cx-Lbs/2,by=y0+h/2-Wbs/2,y1=y0+h+60,yb=y1+hbs+Ts;
@@ -1761,7 +1764,9 @@ $("reveal").onclick=async()=>{
   let name=$("pname").value.trim().slice(0,20);
   if(nameProblem(name)){name="";$("pname").value="";$("nameMsg").textContent="That name wasn't allowed, so you're playing as Anonymous."}
   store.set("caddle-name",name);
-  st.start=Date.now();st.sw=software;st.ranked=false;save();render();$("guess").focus();
+  st.start=Date.now();st.sw=software;st.ranked=false;save();render();
+  // on phones, keep the drawing in view (focusing the box would scroll down and open the keyboard)
+  if(!matchMedia("(max-width:700px)").matches)$("guess").focus({preventScroll:true});
   if(ONLINE&&isToday()){
     $("rankStatus").textContent="connecting…";
     try{
